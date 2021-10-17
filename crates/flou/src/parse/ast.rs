@@ -7,16 +7,23 @@ use nom::{
         complete::{anychar, char},
         is_alphabetic, is_alphanumeric,
     },
-    combinator::{map, recognize, value, verify},
+    combinator::{map, opt, recognize, value, verify},
     sequence::{pair, preceded},
 };
 use nom_supreme::tag::complete::tag;
 
 use super::{
-    combinators::attribute,
+    combinators::{attribute, enclosed_list1},
     parts::quoted_string,
     types::{Input, Result},
 };
+
+const RELATIVE_SIGIL: char = '@';
+const LABEL_SIGIL: char = '#';
+const LIST_SEPARATOR: char = ',';
+const TERMINATOR: char = ';';
+const LIST_DELIMITERS: (char, char) = ('(', ')');
+const BLOCK_DELIMITERS: (char, char) = ('{', '}');
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct Identifier<'i>(pub(crate) &'i str);
@@ -85,25 +92,75 @@ enum Destination<'i> {
 impl<'i> Destination<'i> {
     pub(crate) fn parse(i: Input<'i>) -> Result<Self> {
         alt((
-            map(preceded(char('@'), Direction::parse), Self::Relative),
-            map(preceded(char('#'), Identifier::parse), Self::Label),
+            map(
+                preceded(char(RELATIVE_SIGIL), Direction::parse),
+                Self::Relative,
+            ),
+            map(preceded(char(LABEL_SIGIL), Identifier::parse), Self::Label),
         ))(i)
     }
 }
 
 #[derive(Debug, PartialEq, Eq)]
-enum NodeAttribute {
+enum NodeAttribute<'i> {
     Text(String),
     Class(String),
     Shape(NodeShape),
+    Connect(Vec<ConnectionDescriptor<'i>>),
 }
 
-impl NodeAttribute {
-    pub(crate) fn parse(i: Input) -> Result<Self> {
+impl<'i> NodeAttribute<'i> {
+    pub(crate) fn parse(i: Input<'i>) -> Result<Self> {
+        let connection_descriptors = alt((
+            map(ConnectionDescriptor::parse, |x| vec![x]),
+            enclosed_list1(BLOCK_DELIMITERS, ConnectionDescriptor::parse, tag(";")),
+        ));
+
         alt((
             map(attribute("text", quoted_string), Self::Text),
             map(attribute("class", quoted_string), Self::Class),
             map(attribute("shape", NodeShape::parse), Self::Shape),
+            map(attribute("connect", connection_descriptors), Self::Connect),
+        ))(i)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct ConnectionDescriptor<'i> {
+    to: Destination<'i>,
+    attrs: Vec<ConnectionAttribute>,
+}
+
+impl<'i> ConnectionDescriptor<'i> {
+    pub(crate) fn parse(i: Input<'i>) -> Result<Self> {
+        map(
+            pair(
+                Destination::parse,
+                opt(enclosed_list1(
+                    LIST_DELIMITERS,
+                    ConnectionAttribute::parse,
+                    char(LIST_SEPARATOR),
+                )),
+            ),
+            |(to, attrs)| Self {
+                to,
+                attrs: attrs.unwrap_or_default(),
+            },
+        )(i)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum ConnectionAttribute {
+    Text(String),
+    Class(String),
+}
+
+impl ConnectionAttribute {
+    pub(crate) fn parse(i: Input) -> Result<Self> {
+        alt((
+            map(attribute("text", quoted_string), Self::Text),
+            map(attribute("class", quoted_string), Self::Class),
         ))(i)
     }
 }
@@ -183,5 +240,59 @@ mod tests {
             r#"shape: diamond"#,
             NodeAttribute::Shape(NodeShape::Diamond),
         );
+    }
+
+    #[test]
+    fn valid_connection_attribute() {
+        assert_parsed_eq(
+            ConnectionAttribute::parse,
+            r#"text: "foo""#,
+            ConnectionAttribute::Text("foo".into()),
+        );
+
+        assert_parsed_eq(
+            ConnectionAttribute::parse,
+            r#"class: "class name here""#,
+            ConnectionAttribute::Class("class name here".into()),
+        );
+    }
+
+    #[test]
+    fn valid_connection_descriptor() {
+        assert_parsed_eq(
+            ConnectionDescriptor::parse,
+            r#"@s(text: "foo")"#,
+            ConnectionDescriptor {
+                to: Destination::Relative(Direction::South),
+                attrs: vec![ConnectionAttribute::Text(String::from("foo"))],
+            },
+        )
+    }
+
+    #[test]
+    fn valid_node_connect_attribute() {
+        assert_parsed_eq(
+            NodeAttribute::parse,
+            "connect: @n",
+            NodeAttribute::Connect(vec![ConnectionDescriptor {
+                to: Destination::Relative(Direction::North),
+                attrs: vec![],
+            }]),
+        );
+
+        assert_parsed_eq(
+            NodeAttribute::parse,
+            "connect: {@e; #foo}",
+            NodeAttribute::Connect(vec![
+                ConnectionDescriptor {
+                    to: Destination::Relative(Direction::East),
+                    attrs: vec![],
+                },
+                ConnectionDescriptor {
+                    to: Destination::Label(Identifier("foo")),
+                    attrs: vec![],
+                },
+            ]),
+        )
     }
 }
