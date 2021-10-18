@@ -1,29 +1,25 @@
 #![allow(dead_code)]
 
 use nom::{
-    branch::alt,
+    branch::{alt, permutation},
     bytes::complete::take_while,
     character::{
-        complete::{anychar, char},
+        complete::{anychar, char, multispace0},
         is_alphabetic, is_alphanumeric,
     },
     combinator::{map, opt, recognize, value, verify},
-    sequence::{pair, preceded},
+    multi::many1,
+    sequence::{pair, preceded, terminated, tuple},
 };
-use nom_supreme::tag::complete::tag;
+use nom_supreme::{final_parser::final_parser, tag::complete::tag, ParserExt};
 
 use super::{
-    combinators::{attribute, enclosed_list1},
+    combinators::{attribute, block, enclosed_list1, list1, ws},
+    constants::*,
     parts::quoted_string,
     types::{Input, Result},
+    Error,
 };
-
-const RELATIVE_SIGIL: char = '@';
-const LABEL_SIGIL: char = '#';
-const LIST_SEPARATOR: char = ',';
-const TERMINATOR: char = ';';
-const LIST_DELIMITERS: (char, char) = ('(', ')');
-const BLOCK_DELIMITERS: (char, char) = ('{', '}');
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct Identifier<'i>(pub(crate) &'i str);
@@ -36,7 +32,7 @@ impl<'i> Identifier<'i> {
                 verify(anychar, |&c| c == '_' || is_alphabetic(c as u8)),
                 wchar,
             )),
-            Identifier,
+            Self,
         )(i)
     }
 }
@@ -165,8 +161,85 @@ impl ConnectionAttribute {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct Node<'i> {
+    id: Identifier<'i>,
+    label: Option<Identifier<'i>>,
+    attrs: Vec<NodeAttribute<'i>>,
+}
+
+impl<'i> Node<'i> {
+    pub(crate) fn parse(i: Input<'i>) -> Result<Self> {
+        map(
+            tuple((
+                Identifier::parse,
+                opt(preceded(char(LABEL_SIGIL), Identifier::parse)),
+                opt(enclosed_list1(
+                    LIST_DELIMITERS,
+                    NodeAttribute::parse,
+                    char(LIST_SEPARATOR),
+                )),
+            )),
+            |(id, label, attrs)| Self {
+                id,
+                label,
+                attrs: attrs.unwrap_or_default(),
+            },
+        )(i)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct Grid<'i>(Vec<Vec<Option<Node<'i>>>>);
+
+impl<'i> Grid<'i> {
+    pub(crate) fn parse(i: Input<'i>) -> Result<Self> {
+        let empty = tag(EMPTY);
+        let opt_node = alt((map(empty, |_| None), map(Node::parse, Some)));
+        let row = list1(opt_node, char(LIST_SEPARATOR), char(TERMINATOR));
+        let grid = map(many1(ws(row)), Self);
+
+        preceded(terminated(tag("grid"), multispace0), block(grid))(i)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct Definitions<'i>(Vec<(Identifier<'i>, Vec<NodeAttribute<'i>>)>);
+
+impl<'i> Definitions<'i> {
+    pub(crate) fn parse(i: Input<'i>) -> Result<Self> {
+        let definition = pair(
+            Identifier::parse,
+            enclosed_list1(LIST_DELIMITERS, NodeAttribute::parse, char(LIST_SEPARATOR)),
+        )
+        .terminated(char(TERMINATOR));
+        let definitions = map(many1(ws(definition)), Self);
+
+        preceded(terminated(tag("define"), multispace0), block(definitions))(i)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct Document<'i> {
+    grid: Grid<'i>,
+    definitions: Definitions<'i>,
+}
+
+impl<'i> Document<'i> {
+    pub(crate) fn parse(i: Input<'i>) -> std::result::Result<Self, Error<'i>> {
+        let document = map(
+            permutation((ws(Grid::parse), ws(Definitions::parse))),
+            |(grid, definitions)| Self { grid, definitions },
+        );
+
+        final_parser(document)(i)
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use nom::combinator::all_consuming;
+
     use super::*;
     use crate::test::{assert_not_parsed, assert_parsed_eq};
 
@@ -226,13 +299,13 @@ mod tests {
         assert_parsed_eq(
             NodeAttribute::parse,
             r#"text: "foo""#,
-            NodeAttribute::Text("foo".into()),
+            NodeAttribute::Text(String::from("foo")),
         );
 
         assert_parsed_eq(
             NodeAttribute::parse,
             r#"class: "class name here""#,
-            NodeAttribute::Class("class name here".into()),
+            NodeAttribute::Class(String::from("class name here")),
         );
 
         assert_parsed_eq(
@@ -247,13 +320,13 @@ mod tests {
         assert_parsed_eq(
             ConnectionAttribute::parse,
             r#"text: "foo""#,
-            ConnectionAttribute::Text("foo".into()),
+            ConnectionAttribute::Text(String::from("foo")),
         );
 
         assert_parsed_eq(
             ConnectionAttribute::parse,
             r#"class: "class name here""#,
-            ConnectionAttribute::Class("class name here".into()),
+            ConnectionAttribute::Class(String::from("class name here")),
         );
     }
 
@@ -294,5 +367,138 @@ mod tests {
                 },
             ]),
         )
+    }
+
+    #[test]
+    fn valid_node() {
+        assert_parsed_eq(
+            Node::parse,
+            "foo",
+            Node {
+                id: Identifier("foo"),
+                label: None,
+                attrs: vec![],
+            },
+        );
+
+        assert_parsed_eq(
+            Node::parse,
+            "foo#bar",
+            Node {
+                id: Identifier("foo"),
+                label: Some(Identifier("bar")),
+                attrs: vec![],
+            },
+        );
+
+        assert_parsed_eq(
+            Node::parse,
+            "foo(shape: rect)",
+            Node {
+                id: Identifier("foo"),
+                label: None,
+                attrs: vec![NodeAttribute::Shape(NodeShape::Rectangle)],
+            },
+        );
+
+        assert_parsed_eq(
+            Node::parse,
+            "foo#bar(shape: rect)",
+            Node {
+                id: Identifier("foo"),
+                label: Some(Identifier("bar")),
+                attrs: vec![NodeAttribute::Shape(NodeShape::Rectangle)],
+            },
+        );
+    }
+
+    #[test]
+    fn invalid_node() {
+        assert_not_parsed(Node::parse, "");
+        assert_not_parsed(Node::parse, "(shape: rect)");
+        assert_not_parsed(Node::parse, "#bar");
+        assert_not_parsed(Node::parse, "#bar(shape: rect)");
+        // Without all_consuming the parser just stops once it reaches "()".
+        assert_not_parsed(all_consuming(Node::parse), "foo()");
+    }
+
+    #[test]
+    fn valid_grid() {
+        let input = r#"
+            grid {
+                foo#main, bar;
+                baz, _;
+                _;
+            }
+        "#
+        .trim();
+
+        let foo_node = Node {
+            id: Identifier("foo"),
+            label: Some(Identifier("main")),
+            attrs: vec![],
+        };
+        let bar_node = Node {
+            id: Identifier("bar"),
+            label: None,
+            attrs: vec![],
+        };
+        let baz_node = Node {
+            id: Identifier("baz"),
+            label: None,
+            attrs: vec![],
+        };
+
+        assert_parsed_eq(
+            Grid::parse,
+            input,
+            Grid(vec![
+                vec![Some(foo_node), Some(bar_node)],
+                vec![Some(baz_node), None],
+                vec![None],
+            ]),
+        );
+    }
+
+    #[test]
+    fn invalid_grid() {
+        assert_not_parsed(Grid::parse, "grid {}");
+        assert_not_parsed(Grid::parse, "grid { missing_terminator }");
+        assert_not_parsed(Grid::parse, "grid { missing separator; }");
+        assert_not_parsed(Grid::parse, "grid { foo; ; }");
+    }
+
+    #[test]
+    fn valid_definitions() {
+        let input = r#"
+            define {
+                foo(shape: rect);
+                bar(text: "hello");
+            }
+        "#
+        .trim();
+
+        assert_parsed_eq(
+            Definitions::parse,
+            input,
+            Definitions(vec![
+                (
+                    Identifier("foo"),
+                    vec![NodeAttribute::Shape(NodeShape::Rectangle)],
+                ),
+                (
+                    Identifier("bar"),
+                    vec![NodeAttribute::Text(String::from("hello"))],
+                ),
+            ]),
+        )
+    }
+
+    #[test]
+    fn invalid_definitions() {
+        assert_not_parsed(Definitions::parse, "define {}");
+        assert_not_parsed(Definitions::parse, "define { no_attrs; }");
+        assert_not_parsed(Definitions::parse, "define { no_terminator(shape: rect) }");
+        assert_not_parsed(Definitions::parse, "define { ; }");
     }
 }

@@ -9,7 +9,7 @@ use nom_supreme::tag::complete::tag;
 
 use super::{Input, Result};
 
-pub(crate) fn quoted_string(i: Input) -> Result<String> {
+pub(super) fn quoted_string(i: Input) -> Result<String> {
     let esc = escaped_transform(
         none_of("\\\""),
         '\\',
