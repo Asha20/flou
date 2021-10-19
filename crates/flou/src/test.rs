@@ -1,3 +1,8 @@
+use std::{
+    collections::{HashMap, HashSet},
+    iter::FromIterator,
+};
+
 use crate::parse::{ast, Input, Parser};
 
 pub(crate) fn assert_parsed_eq<'i, P: Parser<'i, O>, O: std::fmt::Debug + PartialEq>(
@@ -28,21 +33,12 @@ pub(crate) fn id(s: &str) -> ast::Identifier {
     ast::Identifier(s)
 }
 
-macro_rules! map {
-    ($($k:expr => $v:expr),* $(,)?) => {{
-        use std::iter::{FromIterator, IntoIterator};
-        use std::collections::hash_map::HashMap;
-        HashMap::from_iter(IntoIterator::into_iter([$(($k, $v),)*]))
-    }};
+pub(crate) fn map<K: Eq + std::hash::Hash, V, I: IntoIterator<Item = (K, V)>>(
+    xs: I,
+) -> HashMap<K, V> {
+    HashMap::from_iter(xs)
 }
 
-macro_rules! set {
-    ($($v:expr),* $(,)?) => {{
-        use std::iter::{FromIterator, IntoIterator};
-        use std::collections::hash_set::HashSet;
-        HashSet::from_iter(IntoIterator::into_iter([$($v,)*]))
-    }};
+pub(crate) fn set<T: Eq + std::hash::Hash, I: IntoIterator<Item = T>>(xs: I) -> HashSet<T> {
+    HashSet::from_iter(xs)
 }
-
-pub(crate) use map;
-pub(crate) use set;

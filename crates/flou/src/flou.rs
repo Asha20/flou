@@ -428,32 +428,141 @@ mod tests {
 
     use crate::{
         flou::{Flou, LogicError},
+        grid::ResolutionError,
         parse::ast,
         pos::pos,
         test::{id, map, set},
     };
 
+    macro_rules! parse_flou {
+        (grid: $grid:literal $(,)?) => {{
+            let input = concat!("grid { ", $grid, " }");
+            let document = ast::Document::parse(input).unwrap();
+            Flou::try_from(document)
+        }};
+
+        (grid: $grid:literal, define: $define:literal $(,)?) => {{
+            let input = concat!("grid { ", $grid, " } ", "define { ", $define, " }");
+            let document = ast::Document::parse(input).unwrap();
+            Flou::try_from(document)
+        }};
+    }
+
     #[test]
     fn duplicate_labels() {
-        let input = r#"
-        grid {
-            block#foo;
-            question#bar;
-            block#foo;
-            name#cat, block#bar;
-        }
-        "#;
-
-        let document = ast::Document::parse(input).unwrap();
-
-        let flou = Flou::try_from(document);
+        let flou = parse_flou! {
+            grid: "block#foo; question#bar; block#foo; name#cat, block#bar;",
+        };
 
         assert_eq!(
             flou.unwrap_err(),
-            LogicError::DuplicateLabels(map! {
-                id("foo") => set!{ pos(0, 0), pos(0, 2) },
-                id("bar") => set!{ pos(0, 1), pos(1, 3)},
-            })
+            LogicError::DuplicateLabels(map([
+                (id("foo"), set([pos(0, 0), pos(0, 2)])),
+                (id("bar"), set([pos(0, 1), pos(1, 3)])),
+            ]))
         );
+    }
+
+    #[test]
+    fn duplicate_node_attributes_in_definitions() {
+        let flou = parse_flou! {
+            grid: "foo; bar;",
+            define: r#"
+                foo(shape: rect, shape: diamond);
+                bar(shape: rect, text: "hello", shape: diamond, connect: @s, text: "hey");
+            "#,
+        };
+
+        assert_eq!(
+            flou.unwrap_err(),
+            LogicError::DuplicateNodeAttributesInDefinitions(map([
+                (id("foo"), set(["shape"])),
+                (id("bar"), set(["shape", "text"])),
+            ]))
+        );
+    }
+
+    #[test]
+    fn duplicate_connection_attributes_in_definitions() {
+        let flou = parse_flou! {
+            grid: "foo; bar;",
+            define: r#"
+                foo(connect: @s(text: "hi", text: "hello"));
+                bar(connect: {@n(text: "hey", class: "hello"); @e(class: "hi", class: "hello")});
+            "#,
+        };
+
+        assert_eq!(
+            flou.unwrap_err(),
+            LogicError::DuplicateConnectionAttributesInDefinitions(map([
+                (id("foo"), map([(0, set(["text"]))])),
+                (id("bar"), map([(1, set(["class"]))])),
+            ]))
+        );
+    }
+
+    #[test]
+    fn duplicate_node_attributes_in_grid() {
+        let flou = parse_flou! {
+            grid: r#"
+                foo(shape: rect, text: "hi", shape: diamond);
+                bar(connect: @s, shape: circle, text: "hello", shape: rect, connect: #end);
+            "#,
+        };
+
+        assert_eq!(
+            flou.unwrap_err(),
+            LogicError::DuplicateNodeAttributesInGrid(map([
+                (pos(0, 0), set(["shape"])),
+                (pos(0, 1), set(["connect", "shape"])),
+            ]))
+        );
+    }
+
+    #[test]
+    fn duplicate_connection_attributes_in_grid() {
+        let flou = parse_flou! {
+            grid: r#"
+                foo(connect: @s(text: "hi", text: "hello"));
+                _, bar(connect: {@n(text: "hey", class: "hello"); @e(class: "hi", class: "hello")});
+            "#,
+        };
+
+        assert_eq!(
+            flou.unwrap_err(),
+            LogicError::DuplicateConnectionAttributesInGrid(map([
+                (pos(0, 0), map([(0, set(["text"]))])),
+                (pos(1, 1), map([(1, set(["class"]))])),
+            ]))
+        );
+    }
+
+    #[test]
+    fn invalid_destination() {
+        let flou = parse_flou! {
+            grid: r#"
+                start(connect: @n);
+                middle;
+                end(connect: {#foo; @e});
+            "#,
+            define: "middle(connect: {@n; @s});",
+        };
+
+        assert_eq!(
+            flou.unwrap_err(),
+            LogicError::InvalidDestination(map([
+                (
+                    pos(0, 0),
+                    map([(0, ResolutionError::InvalidDirection(ast::Direction::North))])
+                ),
+                (
+                    pos(0, 2),
+                    map([
+                        (0, ResolutionError::UnknownLabel(id("foo"))),
+                        (1, ResolutionError::InvalidDirection(ast::Direction::East)),
+                    ])
+                )
+            ]))
+        )
     }
 }
