@@ -13,6 +13,8 @@ use nom::{
 };
 use nom_supreme::{final_parser::final_parser, tag::complete::tag, ParserExt};
 
+use crate::pos::{pos, IndexPos};
+
 use super::{
     combinators::{attribute, block, enclosed_list1, list1, ws},
     constants::*,
@@ -21,7 +23,7 @@ use super::{
     Error,
 };
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub(crate) struct Identifier<'i>(pub(crate) &'i str);
 
 impl<'i> Identifier<'i> {
@@ -38,7 +40,7 @@ impl<'i> Identifier<'i> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum NodeShape {
+pub(crate) enum NodeShape {
     Rectangle,
     Square,
     Ellipse,
@@ -61,7 +63,7 @@ impl NodeShape {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-enum Direction {
+pub(crate) enum Direction {
     North,
     South,
     West,
@@ -79,8 +81,8 @@ impl Direction {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-enum Destination<'i> {
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub(crate) enum Destination<'i> {
     Relative(Direction),
     Label(Identifier<'i>),
 }
@@ -97,8 +99,8 @@ impl<'i> Destination<'i> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-enum NodeAttribute<'i> {
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub(crate) enum NodeAttribute<'i> {
     Text(String),
     Class(String),
     Shape(NodeShape),
@@ -119,12 +121,21 @@ impl<'i> NodeAttribute<'i> {
             map(attribute("connect", connection_descriptors), Self::Connect),
         ))(i)
     }
+
+    pub(crate) fn as_key(&self) -> &'static str {
+        match self {
+            NodeAttribute::Text(_) => "text",
+            NodeAttribute::Class(_) => "class",
+            NodeAttribute::Shape(_) => "shape",
+            NodeAttribute::Connect(_) => "connect",
+        }
+    }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-struct ConnectionDescriptor<'i> {
-    to: Destination<'i>,
-    attrs: Vec<ConnectionAttribute>,
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub(crate) struct ConnectionDescriptor<'i> {
+    pub(crate) to: Destination<'i>,
+    pub(crate) attrs: Vec<ConnectionAttribute>,
 }
 
 impl<'i> ConnectionDescriptor<'i> {
@@ -146,8 +157,8 @@ impl<'i> ConnectionDescriptor<'i> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-enum ConnectionAttribute {
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub(crate) enum ConnectionAttribute {
     Text(String),
     Class(String),
 }
@@ -159,13 +170,20 @@ impl ConnectionAttribute {
             map(attribute("class", quoted_string), Self::Class),
         ))(i)
     }
+
+    pub(crate) fn as_key(&self) -> &'static str {
+        match self {
+            ConnectionAttribute::Text(_) => "text",
+            ConnectionAttribute::Class(_) => "class",
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct Node<'i> {
-    id: Identifier<'i>,
-    label: Option<Identifier<'i>>,
-    attrs: Vec<NodeAttribute<'i>>,
+    pub(crate) id: Identifier<'i>,
+    pub(crate) label: Option<Identifier<'i>>,
+    pub(crate) attrs: Vec<NodeAttribute<'i>>,
 }
 
 impl<'i> Node<'i> {
@@ -201,35 +219,50 @@ impl<'i> Grid<'i> {
 
         preceded(terminated(tag("grid"), multispace0), block(grid))(i)
     }
+
+    pub(crate) fn nodes(&self) -> impl Iterator<Item = (IndexPos, &Node<'i>)> {
+        self.0.iter().enumerate().flat_map(|(y, row)| {
+            row.iter()
+                .enumerate()
+                .filter_map(move |(x, node)| node.as_ref().map(|node| (pos(x, y).into(), node)))
+        })
+    }
+
+    pub(crate) fn size(&self) -> IndexPos {
+        let height = self.0.len();
+        let width = self.0.iter().map(|v| v.len()).max().unwrap_or_default();
+
+        pos(width, height).into()
+    }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub(crate) struct Definitions<'i>(Vec<(Identifier<'i>, Vec<NodeAttribute<'i>>)>);
+pub(crate) type Definitions<'i> = Vec<(Identifier<'i>, Vec<NodeAttribute<'i>>)>;
 
-impl<'i> Definitions<'i> {
-    pub(crate) fn parse(i: Input<'i>) -> Result<Self> {
-        let definition = pair(
-            Identifier::parse,
-            enclosed_list1(LIST_DELIMITERS, NodeAttribute::parse, char(LIST_SEPARATOR)),
-        )
-        .terminated(char(TERMINATOR));
-        let definitions = map(many1(ws(definition)), Self);
+pub(crate) fn parse_definitions(i: Input) -> Result<Definitions> {
+    let definition = pair(
+        Identifier::parse,
+        enclosed_list1(LIST_DELIMITERS, NodeAttribute::parse, char(LIST_SEPARATOR)),
+    )
+    .terminated(char(TERMINATOR));
+    let definitions = many1(ws(definition));
 
-        preceded(terminated(tag("define"), multispace0), block(definitions))(i)
-    }
+    preceded(terminated(tag("define"), multispace0), block(definitions))(i)
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct Document<'i> {
-    grid: Grid<'i>,
-    definitions: Definitions<'i>,
+    pub(crate) grid: Grid<'i>,
+    pub(crate) definitions: Definitions<'i>,
 }
 
 impl<'i> Document<'i> {
     pub(crate) fn parse(i: Input<'i>) -> std::result::Result<Self, Error<'i>> {
         let document = map(
-            permutation((ws(Grid::parse), ws(Definitions::parse))),
-            |(grid, definitions)| Self { grid, definitions },
+            permutation((ws(Grid::parse), opt(ws(parse_definitions)))),
+            |(grid, definitions)| Self {
+                grid,
+                definitions: definitions.unwrap_or_default(),
+            },
         );
 
         final_parser(document)(i)
@@ -479,9 +512,9 @@ mod tests {
         .trim();
 
         assert_parsed_eq(
-            Definitions::parse,
+            parse_definitions,
             input,
-            Definitions(vec![
+            vec![
                 (
                     Identifier("foo"),
                     vec![NodeAttribute::Shape(NodeShape::Rectangle)],
@@ -490,15 +523,15 @@ mod tests {
                     Identifier("bar"),
                     vec![NodeAttribute::Text(String::from("hello"))],
                 ),
-            ]),
+            ],
         )
     }
 
     #[test]
     fn invalid_definitions() {
-        assert_not_parsed(Definitions::parse, "define {}");
-        assert_not_parsed(Definitions::parse, "define { no_attrs; }");
-        assert_not_parsed(Definitions::parse, "define { no_terminator(shape: rect) }");
-        assert_not_parsed(Definitions::parse, "define { ; }");
+        assert_not_parsed(parse_definitions, "define {}");
+        assert_not_parsed(parse_definitions, "define { no_attrs; }");
+        assert_not_parsed(parse_definitions, "define { no_terminator(shape: rect) }");
+        assert_not_parsed(parse_definitions, "define { ; }");
     }
 }

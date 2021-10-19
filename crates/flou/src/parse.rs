@@ -1,4 +1,4 @@
-mod ast;
+pub(crate) mod ast;
 mod combinators;
 mod constants;
 mod parts;
