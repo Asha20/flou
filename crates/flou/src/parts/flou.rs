@@ -4,58 +4,41 @@ use std::{
 };
 
 use crate::{
-    grid::{Grid, ResolutionError},
-    parse::ast::{self, ConnectionDescriptor},
+    parse::ast::{
+        ConnectionAttribute, ConnectionDescriptor, Destination, Document, Grid as ASTGrid,
+        Identifier, NodeAttribute, NodeShape,
+    },
     pos::IndexPos,
 };
 
-#[derive(Debug, PartialEq, Eq)]
-pub(crate) enum LogicError<'i> {
-    /// A label was used more than once.
-    DuplicateLabels(MapId<'i, HashSet<IndexPos>>),
-
-    /// There is more than one definition for one identifier.
-    DuplicateDefinitions(HashSet<ast::Identifier<'i>>),
-
-    /// Some definitions contain duplicate node attributes.
-    DuplicateNodeAttributesInDefinitions(MapId<'i, HashSet<&'static str>>),
-
-    /// Some nodes inside the grid have duplicate node attributes.
-    DuplicateNodeAttributesInGrid(MapPos<HashSet<&'static str>>),
-
-    /// Some connections inside the `define` block contain duplicate attributes.
-    DuplicateConnectionAttributesInDefinitions(MapId<'i, HashMap<usize, HashSet<&'static str>>>),
-
-    /// Some connections inside the `grid` block contain duplicate attributes.
-    DuplicateConnectionAttributesInGrid(MapPos<HashMap<usize, HashSet<&'static str>>>),
-
-    /// One or more connections have destinations that couldn't be resolved.
-    InvalidDestination(MapPos<HashMap<usize, ResolutionError<'i>>>),
-}
+use super::{
+    error::LogicError,
+    grid::{Grid, ResolutionError},
+};
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct NodeAttributes {
     text: Option<String>,
     class: Option<String>,
-    shape: Option<ast::NodeShape>,
+    shape: Option<NodeShape>,
 }
 
 /// Tries to assemble `NodeAttributes` from the vector of individual attributes.
 /// The `connect` attribute is separated from the rest so that an independent
 /// vector of connections can be created later down the line.
 fn parse_node_attributes<'i>(
-    attributes: Vec<ast::NodeAttribute<'i>>,
-) -> Result<(NodeAttributes, Option<Vec<ast::ConnectionDescriptor<'i>>>), HashSet<&'static str>> {
+    attributes: Vec<NodeAttribute<'i>>,
+) -> Result<(NodeAttributes, Option<Vec<ConnectionDescriptor<'i>>>), HashSet<&'static str>> {
     let mut res = NodeAttributes::default();
     let mut duplicates = HashSet::new();
     let mut conn_descriptors = None;
 
     for attribute in attributes {
         match attribute {
-            ast::NodeAttribute::Text(text) if res.text.is_none() => res.text = Some(text),
-            ast::NodeAttribute::Class(class) if res.class.is_none() => res.class = Some(class),
-            ast::NodeAttribute::Shape(shape) if res.shape.is_none() => res.shape = Some(shape),
-            ast::NodeAttribute::Connect(descriptors) if conn_descriptors.is_none() => {
+            NodeAttribute::Text(text) if res.text.is_none() => res.text = Some(text),
+            NodeAttribute::Class(class) if res.class.is_none() => res.class = Some(class),
+            NodeAttribute::Shape(shape) if res.shape.is_none() => res.shape = Some(shape),
+            NodeAttribute::Connect(descriptors) if conn_descriptors.is_none() => {
                 conn_descriptors = Some(descriptors)
             }
             _ => {
@@ -77,19 +60,17 @@ pub(crate) struct ConnectionAttributes {
     class: Option<String>,
 }
 
-impl TryFrom<Vec<ast::ConnectionAttribute>> for ConnectionAttributes {
+impl TryFrom<Vec<ConnectionAttribute>> for ConnectionAttributes {
     type Error = HashSet<&'static str>;
 
-    fn try_from(attributes: Vec<ast::ConnectionAttribute>) -> Result<Self, Self::Error> {
+    fn try_from(attributes: Vec<ConnectionAttribute>) -> Result<Self, Self::Error> {
         let mut res = Self::default();
         let mut duplicates = HashSet::new();
 
         for attribute in attributes {
             match attribute {
-                ast::ConnectionAttribute::Text(text) if res.text.is_none() => res.text = Some(text),
-                ast::ConnectionAttribute::Class(class) if res.class.is_none() => {
-                    res.class = Some(class)
-                }
+                ConnectionAttribute::Text(text) if res.text.is_none() => res.text = Some(text),
+                ConnectionAttribute::Class(class) if res.class.is_none() => res.class = Some(class),
                 _ => {
                     duplicates.insert(attribute.as_key());
                 }
@@ -107,9 +88,9 @@ impl TryFrom<Vec<ast::ConnectionAttribute>> for ConnectionAttributes {
 /// Tries to map a label to the position of the node it's attached to.
 /// Labels are supposed to be unique, so encountering duplicates is an error.
 fn try_into_label_map<'i>(
-    grid: &ast::Grid<'i>,
+    grid: &ASTGrid<'i>,
 ) -> Result<MapId<'i, IndexPos>, MapId<'i, HashSet<IndexPos>>> {
-    let mut positions: HashMap<ast::Identifier, HashSet<IndexPos>> = HashMap::new();
+    let mut positions: HashMap<Identifier, HashSet<IndexPos>> = HashMap::new();
 
     for (pos, node) in grid.nodes() {
         if let Some(label) = node.label {
@@ -138,12 +119,12 @@ fn try_into_label_map<'i>(
 }
 
 type MapPos<T> = HashMap<IndexPos, T>;
-type MapId<'i, T> = HashMap<ast::Identifier<'i>, T>;
+type MapId<'i, T> = HashMap<Identifier<'i>, T>;
 type TwoMapId<'i, T1, T2> = (MapId<'i, T1>, MapId<'i, T2>);
 type TwoMapPos<T1, T2> = (MapPos<T1>, MapPos<T2>);
 
 fn get_attributes_from_definitions<'i>(
-    definitions: MapId<'i, Vec<ast::NodeAttribute<'i>>>,
+    definitions: MapId<'i, Vec<NodeAttribute<'i>>>,
 ) -> Result<
     TwoMapId<'i, NodeAttributes, Vec<ConnectionDescriptor<'i>>>,
     MapId<'i, HashSet<&'static str>>,
@@ -174,7 +155,7 @@ fn get_attributes_from_definitions<'i>(
 }
 
 fn get_attributes_from_grid<'i>(
-    grid: &ast::Grid<'i>,
+    grid: &ASTGrid<'i>,
 ) -> Result<TwoMapPos<NodeAttributes, Vec<ConnectionDescriptor<'i>>>, MapPos<HashSet<&'static str>>>
 {
     let mut errors = HashMap::new();
@@ -203,8 +184,8 @@ fn get_attributes_from_grid<'i>(
 }
 
 fn ensure_definitions_are_unique<'i>(
-    definitions: Vec<(ast::Identifier<'i>, Vec<ast::NodeAttribute<'i>>)>,
-) -> Result<MapId<Vec<ast::NodeAttribute<'i>>>, HashSet<ast::Identifier<'i>>> {
+    definitions: Vec<(Identifier<'i>, Vec<NodeAttribute<'i>>)>,
+) -> Result<MapId<Vec<NodeAttribute<'i>>>, HashSet<Identifier<'i>>> {
     let mut duplicates = HashSet::new();
     let mut res = HashMap::new();
 
@@ -223,8 +204,7 @@ fn ensure_definitions_are_unique<'i>(
     }
 }
 
-type MapToIncompleteConnection<'i, T> =
-    HashMap<T, Vec<(ast::Destination<'i>, ConnectionAttributes)>>;
+type MapToIncompleteConnection<'i, T> = HashMap<T, Vec<(Destination<'i>, ConnectionAttributes)>>;
 
 type MapToDuplicateAttrs<'i, T> = HashMap<T, HashMap<usize, HashSet<&'static str>>>;
 
@@ -263,7 +243,7 @@ fn parse_connection_desc_map<T: Eq + std::hash::Hash + Copy>(
 fn resolve_connections_map<'i>(
     grid: &Grid<'i>,
     labels: &MapId<'i, IndexPos>,
-    connections_map: MapPos<Vec<(ast::Destination<'i>, ConnectionAttributes)>>,
+    connections_map: MapPos<Vec<(Destination<'i>, ConnectionAttributes)>>,
 ) -> Result<Vec<Connection>, MapPos<HashMap<usize, ResolutionError<'i>>>> {
     let mut errors: MapPos<HashMap<usize, ResolutionError>> = HashMap::new();
     let mut res = Vec::new();
@@ -372,10 +352,10 @@ struct Flou<'i> {
     node_attributes: MapPos<NodeAttributes>,
 }
 
-impl<'i> TryFrom<ast::Document<'i>> for Flou<'i> {
+impl<'i> TryFrom<Document<'i>> for Flou<'i> {
     type Error = LogicError<'i>;
 
-    fn try_from(document: ast::Document<'i>) -> Result<Self, Self::Error> {
+    fn try_from(document: Document<'i>) -> Result<Self, Self::Error> {
         let grid = Grid::from(&document.grid);
 
         let definitions = ensure_definitions_are_unique(document.definitions)
@@ -427,23 +407,26 @@ mod tests {
     use std::convert::TryFrom;
 
     use crate::{
-        flou::{Flou, LogicError},
-        grid::ResolutionError,
-        parse::ast,
+        parse::ast::{Direction, Document},
         pos::pos,
         test::{id, map, set},
+    };
+
+    use super::{
+        super::grid::ResolutionError,
+        {Flou, LogicError},
     };
 
     macro_rules! parse_flou {
         (grid: $grid:literal $(,)?) => {{
             let input = concat!("grid { ", $grid, " }");
-            let document = ast::Document::parse(input).unwrap();
+            let document = Document::parse(input).unwrap();
             Flou::try_from(document)
         }};
 
         (grid: $grid:literal, define: $define:literal $(,)?) => {{
             let input = concat!("grid { ", $grid, " } ", "define { ", $define, " }");
-            let document = ast::Document::parse(input).unwrap();
+            let document = Document::parse(input).unwrap();
             Flou::try_from(document)
         }};
     }
@@ -553,13 +536,13 @@ mod tests {
             LogicError::InvalidDestination(map([
                 (
                     pos(0, 0),
-                    map([(0, ResolutionError::InvalidDirection(ast::Direction::North))])
+                    map([(0, ResolutionError::InvalidDirection(Direction::North))])
                 ),
                 (
                     pos(0, 2),
                     map([
                         (0, ResolutionError::UnknownLabel(id("foo"))),
-                        (1, ResolutionError::InvalidDirection(ast::Direction::East)),
+                        (1, ResolutionError::InvalidDirection(Direction::East)),
                     ])
                 )
             ]))

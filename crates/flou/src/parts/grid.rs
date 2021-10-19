@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    parse::ast::{self, Identifier},
+    parse::ast::{Destination, Direction, Grid as ASTGrid, Identifier},
     pos::{IndexPos, Position2D},
 };
 
@@ -29,8 +29,8 @@ impl From<PaddedPos> for IndexPos {
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum ResolutionError<'i> {
-    InvalidDirection(ast::Direction),
-    UnknownLabel(ast::Identifier<'i>),
+    InvalidDirection(Direction),
+    UnknownLabel(Identifier<'i>),
 }
 
 #[derive(Debug)]
@@ -44,16 +44,16 @@ impl<'i> Grid<'i> {
     pub(crate) fn normalize_destination(
         &self,
         from: IndexPos,
-        to: ast::Destination<'i>,
+        to: Destination<'i>,
         labels: &HashMap<Identifier<'i>, IndexPos>,
     ) -> Result<PaddedPos, ResolutionError<'i>> {
         match to {
-            ast::Destination::Relative(dir) => {
+            Destination::Relative(dir) => {
                 let step = PaddedPos::from(dir);
                 self.walk(from.into(), step)
                     .ok_or(ResolutionError::InvalidDirection(dir))
             }
-            ast::Destination::Label(label) => labels
+            Destination::Label(label) => labels
                 .get(&label)
                 .map(|&pos| pos.into())
                 .ok_or(ResolutionError::UnknownLabel(label)),
@@ -66,7 +66,7 @@ impl<'i> Grid<'i> {
             .map(|positions| positions.iter().map(|&x| x.into()).collect())
     }
 
-    fn get_id(&self, pos: PaddedPos) -> Option<Option<&ast::Identifier>> {
+    fn get_id(&self, pos: PaddedPos) -> Option<Option<&Identifier>> {
         pos.in_bounds(self.size.into())
             .then(|| self.position_to_id.get(&pos))
     }
@@ -85,8 +85,8 @@ impl<'i> Grid<'i> {
     }
 }
 
-impl<'i> From<&ast::Grid<'i>> for Grid<'i> {
-    fn from(grid: &ast::Grid<'i>) -> Self {
+impl<'i> From<&ASTGrid<'i>> for Grid<'i> {
+    fn from(grid: &ASTGrid<'i>) -> Self {
         let mut position_to_id = HashMap::new();
         let mut id_to_positions: HashMap<Identifier, Vec<_>> = HashMap::new();
 

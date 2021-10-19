@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod test;
 
-mod flou;
-mod grid;
 mod parse;
+mod parts;
 mod pos;
