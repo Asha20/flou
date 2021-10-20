@@ -34,6 +34,14 @@ pub(super) fn enclosed_list1<'i, Item, Separator>(
     )
 }
 
+pub(super) fn terminated_list1<'i, Item, Separator, Terminator>(
+    item: impl Parser<'i, Item>,
+    separator: impl Parser<'i, Separator>,
+    terminator: impl Parser<'i, Terminator>,
+) -> impl Parser<'i, Vec<Item>> {
+    collect_separated_terminated(item, ws(separator), terminator.preceded_by(multispace0))
+}
+
 pub(super) fn list1<'i, Item, Separator, Terminator>(
     item: impl Parser<'i, Item>,
     separator: impl Parser<'i, Separator>,

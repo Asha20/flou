@@ -10,13 +10,14 @@ use nom::{
     combinator::{map, opt, recognize, value, verify},
     multi::many1,
     sequence::{pair, preceded, terminated, tuple},
+    Parser,
 };
 use nom_supreme::{final_parser::final_parser, tag::complete::tag, ParserExt};
 
 use crate::pos::{pos, IndexPos};
 
 use super::{
-    combinators::{attribute, block, enclosed_list1, list1, ws},
+    combinators::{attribute, block, enclosed_list1, list1, terminated_list1, ws},
     constants::*,
     parts::quoted_string,
     types::{Input, Result},
@@ -108,7 +109,7 @@ pub(crate) enum NodeAttribute<'i> {
 }
 
 impl<'i> NodeAttribute<'i> {
-    pub(crate) fn parse(i: Input<'i>) -> Result<Self> {
+    fn parse(i: Input<'i>) -> Result<Self> {
         let connection_descriptors = alt((
             map(ConnectionDescriptor::parse, |x| vec![x]),
             enclosed_list1(BLOCK_DELIMITERS, ConnectionDescriptor::parse, tag(";")),
@@ -120,6 +121,25 @@ impl<'i> NodeAttribute<'i> {
             map(attribute("shape", NodeShape::parse), Self::Shape),
             map(attribute("connect", connection_descriptors), Self::Connect),
         ))(i)
+    }
+
+    fn parse_vec(i: Input<'i>) -> Result<Vec<Self>> {
+        alt((
+            map(quoted_string, |x| vec![Self::Text(x)]).terminated(char(LIST_DELIMITERS.1)),
+            map(
+                pair(
+                    quoted_string.terminated(ws(char(LIST_SEPARATOR))),
+                    terminated_list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
+                ),
+                |(text_shorthand, mut tail)| {
+                    tail.insert(0, Self::Text(text_shorthand));
+                    tail
+                },
+            ),
+            terminated_list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
+        ))
+        .preceded_by(char(LIST_DELIMITERS.0))
+        .parse(i)
     }
 
     pub(crate) fn as_key(&self) -> &'static str {
@@ -141,14 +161,7 @@ pub(crate) struct ConnectionDescriptor<'i> {
 impl<'i> ConnectionDescriptor<'i> {
     pub(crate) fn parse(i: Input<'i>) -> Result<Self> {
         map(
-            pair(
-                Destination::parse,
-                opt(enclosed_list1(
-                    LIST_DELIMITERS,
-                    ConnectionAttribute::parse,
-                    char(LIST_SEPARATOR),
-                )),
-            ),
+            pair(Destination::parse, opt(ConnectionAttribute::parse_vec)),
             |(to, attrs)| Self {
                 to,
                 attrs: attrs.unwrap_or_default(),
@@ -169,6 +182,25 @@ impl ConnectionAttribute {
             map(attribute("text", quoted_string), Self::Text),
             map(attribute("class", quoted_string), Self::Class),
         ))(i)
+    }
+
+    pub(crate) fn parse_vec(i: Input) -> Result<Vec<Self>> {
+        alt((
+            map(quoted_string, |x| vec![Self::Text(x)]).terminated(char(LIST_DELIMITERS.1)),
+            map(
+                pair(
+                    quoted_string.terminated(ws(char(LIST_SEPARATOR))),
+                    terminated_list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
+                ),
+                |(text_shorthand, mut tail)| {
+                    tail.insert(0, Self::Text(text_shorthand));
+                    tail
+                },
+            ),
+            terminated_list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
+        ))
+        .preceded_by(char(LIST_DELIMITERS.0))
+        .parse(i)
     }
 
     pub(crate) fn as_key(&self) -> &'static str {
@@ -192,11 +224,7 @@ impl<'i> Node<'i> {
             tuple((
                 Identifier::parse,
                 opt(preceded(char(LABEL_SIGIL), Identifier::parse)),
-                opt(enclosed_list1(
-                    LIST_DELIMITERS,
-                    NodeAttribute::parse,
-                    char(LIST_SEPARATOR),
-                )),
+                opt(NodeAttribute::parse_vec),
             )),
             |(id, label, attrs)| Self {
                 id,
@@ -239,11 +267,7 @@ impl<'i> Grid<'i> {
 pub(crate) type Definitions<'i> = Vec<(Identifier<'i>, Vec<NodeAttribute<'i>>)>;
 
 pub(crate) fn parse_definitions(i: Input) -> Result<Definitions> {
-    let definition = pair(
-        Identifier::parse,
-        enclosed_list1(LIST_DELIMITERS, NodeAttribute::parse, char(LIST_SEPARATOR)),
-    )
-    .terminated(char(TERMINATOR));
+    let definition = pair(Identifier::parse, NodeAttribute::parse_vec).terminated(char(TERMINATOR));
     let definitions = many1(ws(definition));
 
     preceded(terminated(tag("define"), multispace0), block(definitions))(i)
@@ -367,10 +391,13 @@ mod tests {
     fn valid_connection_descriptor() {
         assert_parsed_eq(
             ConnectionDescriptor::parse,
-            r#"@s(text: "foo")"#,
+            r#"@s("foo", class: "bar")"#,
             ConnectionDescriptor {
                 to: Destination::Relative(Direction::South),
-                attrs: vec![ConnectionAttribute::Text(String::from("foo"))],
+                attrs: vec![
+                    ConnectionAttribute::Text(String::from("foo")),
+                    ConnectionAttribute::Class(String::from("bar")),
+                ],
             },
         )
     }
@@ -416,21 +443,34 @@ mod tests {
 
         assert_parsed_eq(
             Node::parse,
-            "foo#bar",
+            "foo#bar(shape: rect)",
             Node {
                 id: Identifier("foo"),
                 label: Some(Identifier("bar")),
-                attrs: vec![],
+                attrs: vec![NodeAttribute::Shape(NodeShape::Rectangle)],
             },
         );
 
         assert_parsed_eq(
             Node::parse,
-            "foo(shape: rect)",
+            r#"foo("hello")"#,
             Node {
                 id: Identifier("foo"),
                 label: None,
-                attrs: vec![NodeAttribute::Shape(NodeShape::Rectangle)],
+                attrs: vec![NodeAttribute::Text(String::from("hello"))],
+            },
+        );
+
+        assert_parsed_eq(
+            Node::parse,
+            r#"foo("hey", shape: diamond)"#,
+            Node {
+                id: Identifier("foo"),
+                label: None,
+                attrs: vec![
+                    NodeAttribute::Text(String::from("hey")),
+                    NodeAttribute::Shape(NodeShape::Diamond),
+                ],
             },
         );
 
