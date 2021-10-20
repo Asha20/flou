@@ -2,30 +2,8 @@ use std::collections::HashMap;
 
 use crate::{
     parse::ast::{Destination, Direction, Grid as ASTGrid, Identifier},
-    pos::{IndexPos, Position2D},
+    pos::IndexPos,
 };
-
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub(crate) struct PaddedSpace;
-pub(crate) type PaddedPos = Position2D<isize, PaddedSpace>;
-
-impl PaddedPos {
-    const PADDING: isize = 1;
-}
-
-impl From<IndexPos> for PaddedPos {
-    fn from(other: IndexPos) -> Self {
-        let res = other * (PaddedPos::PADDING + 1) + PaddedPos::PADDING;
-        Self::new(res.x, res.y)
-    }
-}
-
-impl From<PaddedPos> for IndexPos {
-    fn from(other: PaddedPos) -> Self {
-        let res = (other - PaddedPos::PADDING) / (PaddedPos::PADDING + 1);
-        Self::new(res.x, res.y)
-    }
-}
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum ResolutionError<'i> {
@@ -36,8 +14,8 @@ pub(crate) enum ResolutionError<'i> {
 #[derive(Debug)]
 pub(crate) struct Grid<'i> {
     size: IndexPos,
-    position_to_id: HashMap<PaddedPos, Identifier<'i>>,
-    id_to_positions: HashMap<Identifier<'i>, Vec<PaddedPos>>,
+    position_to_id: HashMap<IndexPos, Identifier<'i>>,
+    id_to_positions: HashMap<Identifier<'i>, Vec<IndexPos>>,
 }
 
 impl<'i> Grid<'i> {
@@ -46,32 +24,30 @@ impl<'i> Grid<'i> {
         from: IndexPos,
         to: Destination<'i>,
         labels: &HashMap<Identifier<'i>, IndexPos>,
-    ) -> Result<PaddedPos, ResolutionError<'i>> {
+    ) -> Result<IndexPos, ResolutionError<'i>> {
         match to {
             Destination::Relative(dir) => {
-                let step = PaddedPos::from(dir);
-                self.walk(from.into(), step)
+                let step = IndexPos::from(dir);
+                self.walk(from, step)
                     .ok_or(ResolutionError::InvalidDirection(dir))
             }
             Destination::Label(label) => labels
                 .get(&label)
-                .map(|&pos| pos.into())
+                .copied()
                 .ok_or(ResolutionError::UnknownLabel(label)),
         }
     }
 
-    pub(crate) fn get_positions(&self, id: &Identifier<'i>) -> Option<Vec<IndexPos>> {
-        self.id_to_positions
-            .get(id)
-            .map(|positions| positions.iter().map(|&x| x.into()).collect())
+    pub(crate) fn get_positions(&self, id: &Identifier<'i>) -> Option<&Vec<IndexPos>> {
+        self.id_to_positions.get(id)
     }
 
-    fn get_id(&self, pos: PaddedPos) -> Option<Option<&Identifier>> {
-        pos.in_bounds(self.size.into())
+    fn get_id(&self, pos: IndexPos) -> Option<Option<&Identifier>> {
+        pos.in_bounds(self.size)
             .then(|| self.position_to_id.get(&pos))
     }
 
-    fn walk(&self, start: PaddedPos, step: PaddedPos) -> Option<PaddedPos> {
+    fn walk(&self, start: IndexPos, step: IndexPos) -> Option<IndexPos> {
         let mut current = start;
         loop {
             current += step;
@@ -91,8 +67,6 @@ impl<'i> From<&ASTGrid<'i>> for Grid<'i> {
         let mut id_to_positions: HashMap<Identifier, Vec<_>> = HashMap::new();
 
         for (pos, node) in grid.nodes() {
-            let pos: PaddedPos = pos.into();
-
             position_to_id.insert(pos, node.id);
             id_to_positions.entry(node.id).or_default().push(pos);
         }

@@ -251,11 +251,7 @@ fn resolve_connections_map<'i>(
     for (from, connections) in connections_map {
         for (i, (destination, attrs)) in connections.into_iter().enumerate() {
             match grid.normalize_destination(from, destination, labels) {
-                Ok(to) => res.push(Connection {
-                    from,
-                    to: to.into(),
-                    attrs,
-                }),
+                Ok(to) => res.push(Connection { from, to, attrs }),
                 Err(resolution_error) => {
                     errors.entry(from).or_default().insert(i, resolution_error);
                 }
@@ -275,7 +271,7 @@ fn resolve_id_map<'i, T: Clone>(grid: &Grid<'i>, map_id: MapId<T>) -> MapPos<T> 
 
     for (id, value) in map_id {
         if let Some(positions) = grid.get_positions(&id) {
-            for pos in positions {
+            for &pos in positions {
                 res.insert(pos, value.clone());
             }
         }
