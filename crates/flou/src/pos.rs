@@ -6,7 +6,13 @@ use std::{fmt, marker::PhantomData, ops};
 pub(crate) struct IndexSpace;
 pub(crate) type IndexPos = Position2D<isize, IndexSpace>;
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub(crate) struct PixelSpace;
+pub(crate) type PixelPos = Position2D<i32, PixelSpace>;
+
 impl_pos_from!(Position2D<usize, IndexSpace>, IndexPos, isize);
+impl_pos_from!(PixelPos, IndexPos, isize);
+impl_pos_from!(IndexPos, PixelPos, i32);
 
 #[derive(PartialEq, Eq, std::hash::Hash)]
 pub(crate) struct Position2D<T: Num, U> {
