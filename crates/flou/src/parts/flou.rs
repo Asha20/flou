@@ -16,11 +16,86 @@ use super::{
     grid::{Grid, ResolutionError},
 };
 
+type MapPos<T> = HashMap<IndexPos, T>;
+type MapId<'i, T> = HashMap<Identifier<'i>, T>;
+type TwoMapId<'i, T1, T2> = (MapId<'i, T1>, MapId<'i, T2>);
+type TwoMapPos<T1, T2> = (MapPos<T1>, MapPos<T2>);
+
 #[derive(Debug, Default, Clone)]
 pub(crate) struct NodeAttributes {
     text: Option<String>,
     class: Option<String>,
     shape: Option<NodeShape>,
+}
+
+#[derive(Debug, Default, Clone)]
+pub(crate) struct ConnectionAttributes {
+    text: Option<String>,
+    class: Option<String>,
+}
+
+#[derive(Debug)]
+struct Connection {
+    from: IndexPos,
+    to: IndexPos,
+    attrs: ConnectionAttributes,
+}
+
+#[derive(Debug)]
+struct Flou<'i> {
+    grid: Grid<'i>,
+    connections: Vec<Connection>,
+    node_attributes: MapPos<NodeAttributes>,
+}
+
+impl<'i> TryFrom<Document<'i>> for Flou<'i> {
+    type Error = LogicError<'i>;
+
+    fn try_from(document: Document<'i>) -> Result<Self, Self::Error> {
+        let grid = Grid::from(&document.grid);
+
+        let definitions = ensure_definitions_are_unique(document.definitions)
+            .map_err(LogicError::DuplicateDefinitions)?;
+
+        // TODO: Warn if a definition doesn't map to any nodes in the grid.
+
+        let (def_attrs, def_connections) = {
+            let (def_attrs, def_connection_desc_map) = get_attributes_from_definitions(definitions)
+                .map_err(LogicError::DuplicateNodeAttributesInDefinitions)?;
+
+            let def_connections = parse_connection_desc_map(def_connection_desc_map)
+                .map_err(LogicError::DuplicateConnectionAttributesInDefinitions)?;
+
+            (
+                resolve_id_map(&grid, def_attrs),
+                resolve_id_map(&grid, def_connections),
+            )
+        };
+
+        let (grid_attrs, grid_connections) = {
+            let (grid_attrs, grid_conn_desc_map) = get_attributes_from_grid(&document.grid)
+                .map_err(LogicError::DuplicateNodeAttributesInGrid)?;
+
+            let grid_connections = parse_connection_desc_map(grid_conn_desc_map)
+                .map_err(LogicError::DuplicateConnectionAttributesInGrid)?;
+
+            (grid_attrs, grid_connections)
+        };
+
+        let node_attributes = Overwrite::overwrite(def_attrs, grid_attrs);
+        let connections = Overwrite::overwrite(def_connections, grid_connections);
+
+        let labels = try_into_label_map(&document.grid).map_err(LogicError::DuplicateLabels)?;
+
+        let connections = resolve_connections_map(&grid, &labels, connections)
+            .map_err(LogicError::InvalidDestination)?;
+
+        Ok(Self {
+            grid,
+            connections,
+            node_attributes,
+        })
+    }
 }
 
 /// Tries to assemble `NodeAttributes` from the vector of individual attributes.
@@ -52,12 +127,6 @@ fn parse_node_attributes<'i>(
     } else {
         Err(duplicates)
     }
-}
-
-#[derive(Debug, Default, Clone)]
-pub(crate) struct ConnectionAttributes {
-    text: Option<String>,
-    class: Option<String>,
 }
 
 impl TryFrom<Vec<ConnectionAttribute>> for ConnectionAttributes {
@@ -117,11 +186,6 @@ fn try_into_label_map<'i>(
         Ok(labels)
     }
 }
-
-type MapPos<T> = HashMap<IndexPos, T>;
-type MapId<'i, T> = HashMap<Identifier<'i>, T>;
-type TwoMapId<'i, T1, T2> = (MapId<'i, T1>, MapId<'i, T2>);
-type TwoMapPos<T1, T2> = (MapPos<T1>, MapPos<T2>);
 
 fn get_attributes_from_definitions<'i>(
     definitions: MapId<'i, Vec<NodeAttribute<'i>>>,
@@ -205,7 +269,6 @@ fn ensure_definitions_are_unique<'i>(
 }
 
 type MapToIncompleteConnection<'i, T> = HashMap<T, Vec<(Destination<'i>, ConnectionAttributes)>>;
-
 type MapToDuplicateAttrs<'i, T> = HashMap<T, HashMap<usize, HashSet<&'static str>>>;
 
 fn parse_connection_desc_map<T: Eq + std::hash::Hash + Copy>(
@@ -280,13 +343,6 @@ fn resolve_id_map<'i, T: Clone>(grid: &Grid<'i>, map_id: MapId<T>) -> MapPos<T> 
     res
 }
 
-#[derive(Debug)]
-struct Connection {
-    from: IndexPos,
-    to: IndexPos,
-    attrs: ConnectionAttributes,
-}
-
 trait Overwrite {
     fn overwrite(old: Self, new: Self) -> Self;
 }
@@ -338,63 +394,6 @@ impl<K: Eq + std::hash::Hash, V: Overwrite> Overwrite for HashMap<K, V> {
         }
 
         res
-    }
-}
-
-#[derive(Debug)]
-struct Flou<'i> {
-    grid: Grid<'i>,
-    connections: Vec<Connection>,
-    node_attributes: MapPos<NodeAttributes>,
-}
-
-impl<'i> TryFrom<Document<'i>> for Flou<'i> {
-    type Error = LogicError<'i>;
-
-    fn try_from(document: Document<'i>) -> Result<Self, Self::Error> {
-        let grid = Grid::from(&document.grid);
-
-        let definitions = ensure_definitions_are_unique(document.definitions)
-            .map_err(LogicError::DuplicateDefinitions)?;
-
-        // TODO: Warn if a definition doesn't map to any nodes in the grid.
-
-        let (def_attrs, def_connections) = {
-            let (def_attrs, def_connection_desc_map) = get_attributes_from_definitions(definitions)
-                .map_err(LogicError::DuplicateNodeAttributesInDefinitions)?;
-
-            let def_connections = parse_connection_desc_map(def_connection_desc_map)
-                .map_err(LogicError::DuplicateConnectionAttributesInDefinitions)?;
-
-            (
-                resolve_id_map(&grid, def_attrs),
-                resolve_id_map(&grid, def_connections),
-            )
-        };
-
-        let (grid_attrs, grid_connections) = {
-            let (grid_attrs, grid_conn_desc_map) = get_attributes_from_grid(&document.grid)
-                .map_err(LogicError::DuplicateNodeAttributesInGrid)?;
-
-            let grid_connections = parse_connection_desc_map(grid_conn_desc_map)
-                .map_err(LogicError::DuplicateConnectionAttributesInGrid)?;
-
-            (grid_attrs, grid_connections)
-        };
-
-        let node_attributes = Overwrite::overwrite(def_attrs, grid_attrs);
-        let connections = Overwrite::overwrite(def_connections, grid_connections);
-
-        let labels = try_into_label_map(&document.grid).map_err(LogicError::DuplicateLabels)?;
-
-        let connections = resolve_connections_map(&grid, &labels, connections)
-            .map_err(LogicError::InvalidDestination)?;
-
-        Ok(Self {
-            grid,
-            connections,
-            node_attributes,
-        })
     }
 }
 
