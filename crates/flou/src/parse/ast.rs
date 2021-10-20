@@ -274,7 +274,7 @@ mod tests {
     use nom::combinator::all_consuming;
 
     use super::*;
-    use crate::test::{assert_not_parsed, assert_parsed_eq};
+    use crate::test::{assert_eq, assert_not_parsed, assert_parsed_eq};
 
     #[test]
     fn valid_identifier() {

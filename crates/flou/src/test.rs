@@ -5,6 +5,8 @@ use std::{
 
 use crate::parse::{ast, Input, Parser};
 
+pub(crate) use pretty_assertions::assert_eq;
+
 pub(crate) fn assert_parsed_eq<'i, P: Parser<'i, O>, O: std::fmt::Debug + PartialEq>(
     mut parser: P,
     input: Input<'i>,

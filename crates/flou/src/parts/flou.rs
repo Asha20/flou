@@ -405,7 +405,7 @@ mod tests {
     use crate::{
         parse::ast::{Direction, Document},
         pos::pos,
-        test::{id, map, set},
+        test::{assert_eq, id, map, set},
     };
 
     use super::{

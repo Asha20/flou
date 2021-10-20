@@ -8,3 +8,6 @@ license = "MIT OR Apache-2.0"
 nom = "7.0.0"
 nom-supreme = "0.6.0"
 num-traits = "0.2.14"
+
+[dev-dependencies]
+pretty_assertions = "1.0.0"

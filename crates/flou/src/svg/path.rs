@@ -57,6 +57,8 @@ impl SVGPath {
 mod tests {
     use crate::{pos::pos, svg::SVGPath};
 
+    use crate::test::assert_eq;
+
     #[test]
     fn create_path() {
         let mut path = SVGPath::new().line_to(pos(10, 20));

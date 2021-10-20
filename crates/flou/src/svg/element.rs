@@ -204,6 +204,8 @@ impl fmt::Display for SVGElement<'_> {
 mod tests {
     use super::{escape, SVGElement};
 
+    use crate::test::assert_eq;
+
     #[test]
     fn tag_only() {
         assert_eq!(SVGElement::new("a").to_string(), "<a />");
