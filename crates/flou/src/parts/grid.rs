@@ -6,15 +6,15 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) enum ResolutionError<'i> {
+pub enum ResolutionError<'i> {
     InvalidDirection(Direction),
     UnknownLabel(Identifier<'i>),
 }
 
 #[derive(Debug)]
 pub(crate) struct Grid<'i> {
-    size: IndexPos,
-    position_to_id: HashMap<IndexPos, Identifier<'i>>,
+    pub(crate) size: IndexPos,
+    pub(crate) position_to_id: HashMap<IndexPos, Identifier<'i>>,
     id_to_positions: HashMap<Identifier<'i>, Vec<IndexPos>>,
 }
 

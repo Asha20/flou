@@ -29,7 +29,7 @@ pub(super) fn quoted_string(i: Input) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test::{assert_eq, assert_not_parsed, assert_parsed_eq};
+    use crate::test::{assert_not_parsed, assert_parsed_eq};
 
     #[test]
     fn valid_quoted_string() {

@@ -1,6 +1,7 @@
 use std::{
     collections::{hash_map, HashMap, HashSet},
     convert::TryFrom,
+    fmt::Display,
 };
 
 use crate::{
@@ -8,6 +9,7 @@ use crate::{
         ConnectionAttribute, ConnectionDescriptor, Destination, Document, Grid as ASTGrid,
         Identifier, NodeAttribute, NodeShape,
     },
+    parse::Error as AstError,
     pos::IndexPos,
 };
 
@@ -23,9 +25,9 @@ type TwoMapPos<T1, T2> = (MapPos<T1>, MapPos<T2>);
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct NodeAttributes {
-    text: Option<String>,
-    class: Option<String>,
-    shape: Option<NodeShape>,
+    pub(crate) text: Option<String>,
+    pub(crate) class: Option<String>,
+    pub(crate) shape: Option<NodeShape>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -35,17 +37,37 @@ pub(crate) struct ConnectionAttributes {
 }
 
 #[derive(Debug)]
-struct Connection {
-    from: IndexPos,
-    to: IndexPos,
-    attrs: ConnectionAttributes,
+pub(crate) struct Connection {
+    pub(crate) from: IndexPos,
+    pub(crate) to: IndexPos,
+    pub(crate) attrs: ConnectionAttributes,
 }
 
 #[derive(Debug)]
-struct Flou<'i> {
-    grid: Grid<'i>,
-    connections: Vec<Connection>,
-    node_attributes: MapPos<NodeAttributes>,
+pub struct Flou<'i> {
+    pub(crate) grid: Grid<'i>,
+    pub(crate) connections: Vec<Connection>,
+    pub(crate) node_attributes: MapPos<NodeAttributes>,
+}
+
+#[derive(Debug)]
+pub enum FlouError<'i> {
+    Parse(AstError<'i>),
+    Logic(LogicError<'i>),
+}
+
+impl<'i> TryFrom<&'i str> for Flou<'i> {
+    type Error = FlouError<'i>;
+
+    fn try_from(i: &'i str) -> Result<Self, Self::Error> {
+        let document = Document::parse(i).map_err(FlouError::Parse)?;
+        let flou = Flou::try_from(document).map_err(FlouError::Logic)?;
+        Ok(flou)
+    }
+}
+
+pub trait Renderer {
+    fn render<'i>(&self, flou: &'i Flou<'i>) -> Box<dyn Display + 'i>;
 }
 
 impl<'i> TryFrom<Document<'i>> for Flou<'i> {

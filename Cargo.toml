@@ -1,5 +1,6 @@
 [workspace]
 
 members = [
-  "crates/flou"
+  "crates/flou",
+  "crates/flou_cli",
 ]

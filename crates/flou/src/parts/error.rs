@@ -1,19 +1,19 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::{parse::ast, pos::IndexPos};
+use crate::{parse::ast::Identifier, pos::IndexPos};
 
 use super::grid::ResolutionError;
 
 type MapPos<T> = HashMap<IndexPos, T>;
-type MapId<'i, T> = HashMap<ast::Identifier<'i>, T>;
+type MapId<'i, T> = HashMap<Identifier<'i>, T>;
 
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) enum LogicError<'i> {
+pub enum LogicError<'i> {
     /// A label was used more than once.
     DuplicateLabels(MapId<'i, HashSet<IndexPos>>),
 
     /// There is more than one definition for one identifier.
-    DuplicateDefinitions(HashSet<ast::Identifier<'i>>),
+    DuplicateDefinitions(HashSet<Identifier<'i>>),
 
     /// Some definitions contain duplicate node attributes.
     DuplicateNodeAttributesInDefinitions(MapId<'i, HashSet<&'static str>>),

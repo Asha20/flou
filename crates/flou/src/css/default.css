@@ -1,0 +1,15 @@
+.background {
+  fill: #eee;
+}
+
+.node {
+  fill: #fff;
+  stroke: #1e1e1e;
+}
+
+text,
+tspan {
+  fill: #1e1e1e;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}

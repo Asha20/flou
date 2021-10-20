@@ -3,23 +3,23 @@ use num_traits::{Num, Signed};
 use std::{fmt, marker::PhantomData, ops};
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub(crate) struct IndexSpace;
-pub(crate) type IndexPos = Position2D<isize, IndexSpace>;
+pub struct IndexSpace;
+pub type IndexPos = Position2D<isize, IndexSpace>;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub(crate) struct PixelSpace;
-pub(crate) type PixelPos = Position2D<i32, PixelSpace>;
+pub struct PixelSpace;
+pub type PixelPos = Position2D<i32, PixelSpace>;
 
 impl_pos_from!(Position2D<usize, IndexSpace>, IndexPos, isize);
 impl_pos_from!(PixelPos, IndexPos, isize);
 impl_pos_from!(IndexPos, PixelPos, i32);
 
 #[derive(PartialEq, Eq, std::hash::Hash)]
-pub(crate) struct Position2D<T: Num, U> {
-    pub(crate) x: T,
-    pub(crate) y: T,
+pub struct Position2D<T: Num, U> {
+    pub x: T,
+    pub y: T,
     #[doc(hidden)]
-    pub(crate) _unit: PhantomData<U>,
+    _unit: PhantomData<U>,
 }
 
 pub(crate) fn pos<T: Num, U>(x: T, y: T) -> Position2D<T, U> {

@@ -24,7 +24,7 @@ use super::{
 };
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub(crate) struct Identifier<'i>(pub(crate) &'i str);
+pub struct Identifier<'i>(pub(crate) &'i str);
 
 impl<'i> Identifier<'i> {
     pub(crate) fn parse(i: Input<'i>) -> Result<Self> {
@@ -63,7 +63,7 @@ impl NodeShape {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub(crate) enum Direction {
+pub enum Direction {
     North,
     South,
     West,
@@ -274,7 +274,7 @@ mod tests {
     use nom::combinator::all_consuming;
 
     use super::*;
-    use crate::test::{assert_eq, assert_not_parsed, assert_parsed_eq};
+    use crate::test::{assert_not_parsed, assert_parsed_eq};
 
     #[test]
     fn valid_identifier() {

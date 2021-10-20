@@ -59,6 +59,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "flou_cli"
+version = "0.1.0"
+dependencies = [
+ "flou",
+]
+
+[[package]]
 name = "indent_write"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
