@@ -42,12 +42,7 @@ impl<'i> Grid<'i> {
         self.id_to_positions.get(id)
     }
 
-    fn get_id(&self, pos: IndexPos) -> Option<Option<&Identifier>> {
-        pos.in_bounds(self.size)
-            .then(|| self.position_to_id.get(&pos))
-    }
-
-    fn walk(&self, start: IndexPos, step: IndexPos) -> Option<IndexPos> {
+    pub(crate) fn walk(&self, start: IndexPos, step: IndexPos) -> Option<IndexPos> {
         let mut current = start;
         loop {
             current += step;
@@ -58,6 +53,11 @@ impl<'i> Grid<'i> {
                 Some(None) => continue,         // Empty space; keep moving
             };
         }
+    }
+
+    fn get_id(&self, pos: IndexPos) -> Option<Option<&Identifier>> {
+        pos.in_bounds(self.size)
+            .then(|| self.position_to_id.get(&pos))
     }
 }
 

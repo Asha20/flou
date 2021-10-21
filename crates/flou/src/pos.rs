@@ -146,17 +146,17 @@ macro_rules! impl_pos_from {
 
 pub(crate) use impl_pos_from;
 
-use crate::parse::ast;
+use crate::parse::ast::Direction;
 
-impl<T: Num + Signed, U> From<ast::Direction> for Position2D<T, U> {
-    fn from(dir: ast::Direction) -> Self {
+impl<T: Num + Signed, U> From<Direction> for Position2D<T, U> {
+    fn from(dir: Direction) -> Self {
         let one = T::one();
         let zero = T::zero();
         match dir {
-            ast::Direction::North => Self::new(zero, -one),
-            ast::Direction::South => Self::new(zero, one),
-            ast::Direction::West => Self::new(-one, zero),
-            ast::Direction::East => Self::new(one, zero),
+            Direction::North => Self::new(zero, -one),
+            Direction::South => Self::new(zero, one),
+            Direction::West => Self::new(-one, zero),
+            Direction::East => Self::new(one, zero),
         }
     }
 }

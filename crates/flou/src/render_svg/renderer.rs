@@ -24,12 +24,7 @@ pub(crate) type PaddedPos = Position2D<isize, PaddedSpace>;
 impl_pos_from!(PaddedPos, PixelPos, i32);
 
 impl PaddedPos {
-    const PADDING: isize = 1;
-
-    fn snap_to_grid(self) -> Self {
-        let res: IndexPos = self.into();
-        res.into()
-    }
+    pub(crate) const PADDING: isize = 1;
 
     fn max(self, val: isize) -> Self {
         Self::new(std::cmp::max(self.x, val), std::cmp::max(self.y, val))
