@@ -96,15 +96,15 @@ impl PaddedPos {
         Self::new(x, y)
     }
 
-    fn grid_aligned(&self) -> bool {
+    pub(crate) fn grid_aligned(&self) -> bool {
         self.grid_x_aligned() && self.grid_y_aligned()
     }
 
-    fn grid_x_aligned(&self) -> bool {
+    pub(crate) fn grid_x_aligned(&self) -> bool {
         self.x & 1 == 1
     }
 
-    fn grid_y_aligned(&self) -> bool {
+    pub(crate) fn grid_y_aligned(&self) -> bool {
         self.y & 1 == 1
     }
 }
@@ -238,7 +238,8 @@ fn path_with_sides(grid: &Grid, from: PosSide, to: PosSide) -> Vec<PaddedPos> {
     }
 
     let (corner, lane_count) = get_best_corner(s_from, s_to);
-    let connect_to_corner = |corner| vec![from.into(), s_from, corner, s_to, to.into()];
+    let connect_to_corner =
+        |corner| vec![from.origin.into(), s_from, corner, s_to, to.origin.into()];
 
     match lane_count {
         FreeAxisCount::Two => connect_to_corner(corner),

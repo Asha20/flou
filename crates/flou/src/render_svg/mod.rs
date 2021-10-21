@@ -1,6 +1,7 @@
 mod node;
+mod path;
 mod renderer;
 mod viewport;
-mod path;
 
 pub use renderer::SvgRenderer;
+pub(crate) use viewport::Viewport;

@@ -32,8 +32,8 @@ pub(crate) struct NodeAttributes {
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct ConnectionAttributes {
-    text: Option<String>,
-    class: Option<String>,
+    pub(crate) text: Option<String>,
+    pub(crate) class: Option<String>,
 }
 
 #[derive(Debug)]

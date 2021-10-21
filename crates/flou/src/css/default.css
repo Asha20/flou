@@ -13,3 +13,15 @@ tspan {
   text-anchor: middle;
   dominant-baseline: middle;
 }
+
+.path {
+  fill: none;
+  stroke: #1e1e1e;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.connection .arrowhead {
+  stroke: #1e1e1e;
+  fill: #1e1e1e;
+}

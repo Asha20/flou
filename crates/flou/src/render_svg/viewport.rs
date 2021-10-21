@@ -1,4 +1,7 @@
-use crate::pos::{pos, PixelPos};
+use crate::{
+    parse::ast::Direction,
+    pos::{pos, PixelPos},
+};
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Viewport {
@@ -11,6 +14,17 @@ pub(crate) struct Midpoints {
     pub(crate) bottom: PixelPos,
     pub(crate) left: PixelPos,
     pub(crate) right: PixelPos,
+}
+
+impl Midpoints {
+    pub(crate) fn get_from_direction(&self, dir: Direction) -> PixelPos {
+        match dir {
+            Direction::North => self.top,
+            Direction::East => self.right,
+            Direction::West => self.left,
+            Direction::South => self.bottom,
+        }
+    }
 }
 
 impl Viewport {

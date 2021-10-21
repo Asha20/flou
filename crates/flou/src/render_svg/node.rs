@@ -1,10 +1,11 @@
 use crate::{
-    parse::ast::NodeShape,
+    parse::ast::{Direction, NodeShape},
     parts::NodeAttributes,
+    pos::{pos, PixelPos},
     svg::{SVGElement, SVGPath, SVGText},
 };
 
-use super::viewport::Viewport;
+use super::viewport::{Midpoints, Viewport};
 
 impl Default for NodeShape {
     fn default() -> Self {
@@ -104,5 +105,27 @@ impl NodeAttributes {
             .class_opt(self.class.as_ref())
             .child(shape.class("node"))
             .child_opt(text)
+    }
+
+    pub(crate) fn link_point(&self, viewport: Viewport, dir: Direction) -> PixelPos {
+        match &self.shape.unwrap_or_default() {
+            NodeShape::Circle | NodeShape::Square | NodeShape::AngledSquare => {
+                let radius = std::cmp::min(viewport.size.x, viewport.size.y) / 2;
+                let center = viewport.center();
+
+                // Calculate the midpoints as offsets from the center of the
+                // viewport because it's simpler, but then subtract the origin
+                // (top-left corner) because the offsets need to be relative to *it*.
+                let midpoints = Midpoints {
+                    top: center + pos(0, -radius) - viewport.origin,
+                    bottom: center + pos(0, radius) - viewport.origin,
+                    left: center + pos(-radius, 0) - viewport.origin,
+                    right: center + pos(radius, 0) - viewport.origin,
+                };
+
+                midpoints.get_from_direction(dir)
+            }
+            _ => viewport.midpoints_relative().get_from_direction(dir),
+        }
     }
 }
