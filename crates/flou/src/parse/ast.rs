@@ -4,7 +4,7 @@ use nom::{
     branch::{alt, permutation},
     bytes::complete::take_while,
     character::{
-        complete::{anychar, char, multispace0},
+        complete::{anychar, char},
         is_alphabetic, is_alphanumeric,
     },
     combinator::{map, opt, recognize, value, verify},
@@ -20,7 +20,7 @@ use crate::{
 };
 
 use super::{
-    combinators::{attribute, block, list1, ws},
+    combinators::{attribute, block, list1, space, ws},
     constants::*,
     parts::quoted_string,
     types::{Input, Result},
@@ -284,7 +284,7 @@ impl<'i> Grid<'i> {
         let row = list1(opt_node, char(LIST_SEPARATOR), char(TERMINATOR));
         let grid = map(many1(ws(row)), Self);
 
-        preceded(terminated(tag("grid"), multispace0), block(grid))(i)
+        preceded(terminated(tag("grid"), space), block(grid))(i)
     }
 
     pub(crate) fn nodes(&self) -> impl Iterator<Item = (IndexPos, &Node<'i>)> {
@@ -309,7 +309,7 @@ pub(crate) fn parse_definitions(i: Input) -> Result<Definitions> {
     let definition = pair(Identifier::parse, NodeAttribute::parse_vec).terminated(char(TERMINATOR));
     let definitions = many1(ws(definition));
 
-    preceded(terminated(tag("define"), multispace0), block(definitions))(i)
+    preceded(terminated(tag("define"), space), block(definitions))(i)
 }
 
 #[derive(Debug, PartialEq, Eq)]
