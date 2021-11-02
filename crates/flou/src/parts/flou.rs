@@ -6,7 +6,7 @@ use std::{
 
 use crate::{
     parse::ast::{
-        ConnectionAttribute, ConnectionDescriptor, Destination, Direction, Document,
+        ArrowheadType, ConnectionAttribute, ConnectionDescriptor, Destination, Direction, Document,
         Grid as ASTGrid, Identifier, NodeAttribute, NodeShape,
     },
     parse::Error as AstError,
@@ -34,6 +34,7 @@ pub(crate) struct NodeAttributes {
 pub(crate) struct ConnectionAttributes {
     pub(crate) text: Option<String>,
     pub(crate) class: Option<String>,
+    pub(crate) arrowheads: Option<ArrowheadType>,
 }
 
 #[derive(Debug)]
@@ -162,6 +163,9 @@ impl TryFrom<Vec<ConnectionAttribute>> for ConnectionAttributes {
             match attribute {
                 ConnectionAttribute::Text(text) if res.text.is_none() => res.text = Some(text),
                 ConnectionAttribute::Class(class) if res.class.is_none() => res.class = Some(class),
+                ConnectionAttribute::Arrowheads(arrowheads) if res.arrowheads.is_none() => {
+                    res.arrowheads = Some(arrowheads)
+                }
                 _ => {
                     duplicates.insert(attribute.as_key());
                 }
@@ -399,6 +403,7 @@ impl Overwrite for ConnectionAttributes {
         Self {
             text: new.text.or(old.text),
             class: new.class.or(old.class),
+            arrowheads: new.arrowheads.or(old.arrowheads),
         }
     }
 }

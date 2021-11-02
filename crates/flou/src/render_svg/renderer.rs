@@ -1,7 +1,7 @@
 use std::{cmp::Ordering, convert::TryFrom, fmt::Display};
 
 use crate::{
-    parse::ast::Direction,
+    parse::ast::{ArrowheadType, Direction},
     parts::{Connection, Flou, NodeAttributes, Renderer},
     pos::{impl_pos_from, pos, IndexPos, PixelPos, Position2D},
     svg::{ArrowHead, SVGElement, SVGPath, SVGText},
@@ -226,12 +226,6 @@ impl SvgRenderer {
             path_svg = path_svg.line_to(*point);
         }
 
-        let arrowhead = {
-            let (point, dir) = link_points.last().cloned().unwrap();
-            let arrowhead_viewport = Viewport::new(point, pos(ARROWHEAD_WIDTH, ARROWHEAD_HEIGHT));
-            ArrowHead::render(arrowhead_viewport, dir.reverse()).class("arrowhead")
-        };
-
         let svg_text = connection.attrs.text.as_ref().map(|text| {
             let text_origin = match &link_points[..2] {
                 [from, to] => {
@@ -249,12 +243,29 @@ impl SvgRenderer {
 
         let path = path_svg.render().class("path");
 
-        SVGElement::new("g")
+        let mut result = SVGElement::new("g")
             .class("connection")
             .class_opt(connection.attrs.class.as_ref())
             .child(path)
-            .child(arrowhead)
-            .child_opt(svg_text)
+            .child_opt(svg_text);
+
+        fn create_arrowhead((link_point, dir): (PixelPos, Direction)) -> SVGElement<'static> {
+            let arrowhead_viewport =
+                Viewport::new(link_point, pos(ARROWHEAD_WIDTH, ARROWHEAD_HEIGHT));
+            ArrowHead::render(arrowhead_viewport, dir.reverse()).class("arrowhead")
+        }
+
+        let arrowheads = connection.attrs.arrowheads.unwrap_or_default();
+
+        if arrowheads == ArrowheadType::Start || arrowheads == ArrowheadType::Both {
+            result = result.child(create_arrowhead(link_points.first().cloned().unwrap()));
+        }
+
+        if arrowheads == ArrowheadType::End || arrowheads == ArrowheadType::Both {
+            result = result.child(create_arrowhead(link_points.last().cloned().unwrap()));
+        }
+
+        result
     }
 
     fn get_link_point_offset<'i>(

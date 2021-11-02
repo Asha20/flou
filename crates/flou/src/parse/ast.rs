@@ -185,17 +185,40 @@ impl<'i> ConnectionDescriptor<'i> {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub(crate) enum ArrowheadType {
+    None,
+    Start,
+    End,
+    Both,
+}
+
+impl Default for ArrowheadType {
+    fn default() -> Self {
+        Self::End
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub(crate) enum ConnectionAttribute {
     Text(String),
     Class(String),
+    Arrowheads(ArrowheadType),
 }
 
 impl ConnectionAttribute {
     pub(crate) fn parse(i: Input) -> Result<Self> {
+        let arrowheads = alt((
+            value(ArrowheadType::None, tag("none")),
+            value(ArrowheadType::Start, tag("start")),
+            value(ArrowheadType::End, tag("end")),
+            value(ArrowheadType::Both, tag("both")),
+        ));
+
         alt((
             map(attribute("text", quoted_string), Self::Text),
             map(attribute("class", quoted_string), Self::Class),
+            map(attribute("arrowheads", arrowheads), Self::Arrowheads),
         ))(i)
     }
 
@@ -220,8 +243,9 @@ impl ConnectionAttribute {
 
     pub(crate) fn as_key(&self) -> &'static str {
         match self {
-            ConnectionAttribute::Text(_) => "text",
-            ConnectionAttribute::Class(_) => "class",
+            Self::Text(_) => "text",
+            Self::Class(_) => "class",
+            Self::Arrowheads(_) => "arrowheads",
         }
     }
 }
@@ -401,6 +425,12 @@ mod tests {
             ConnectionAttribute::parse,
             r#"class: "class name here""#,
             ConnectionAttribute::Class(String::from("class name here")),
+        );
+
+        assert_parsed_eq(
+            ConnectionAttribute::parse,
+            "arrowheads: none",
+            ConnectionAttribute::Arrowheads(ArrowheadType::None),
         );
     }
 
