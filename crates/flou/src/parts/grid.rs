@@ -26,6 +26,7 @@ impl<'i> Grid<'i> {
         labels: &HashMap<Identifier<'i>, IndexPos>,
     ) -> Result<IndexPos, ResolutionError<'i>> {
         match to {
+            Destination::Itself => Ok(from),
             Destination::Relative(dir) => {
                 let step = IndexPos::from(dir);
                 self.walk(from, step)

@@ -182,13 +182,6 @@ pub(crate) fn get_path(
         return vec![from.origin.into(), s_from, s_to, to.origin.into()];
     }
 
-    if from.origin == to.origin {
-        // When this is implemented, it will handle the case where from_side and to_side
-        // are opposites. There should never be a case where they are equal; this should
-        // be prevented earlier, as a parsing error.
-        unimplemented!()
-    }
-
     let (corner, lane_count) = get_best_corner(s_from, s_to);
     let make_connection = |mid: Vec<PaddedPos>| {
         let mut res = vec![from.origin.into(), s_from];

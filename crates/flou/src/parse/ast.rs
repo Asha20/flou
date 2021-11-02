@@ -87,6 +87,7 @@ impl Direction {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub(crate) enum Destination<'i> {
+    Itself,
     Relative(Direction),
     Label(Identifier<'i>),
 }
@@ -94,9 +95,12 @@ pub(crate) enum Destination<'i> {
 impl<'i> Destination<'i> {
     pub(crate) fn parse(i: Input<'i>) -> Result<Self> {
         alt((
-            map(
-                preceded(char(RELATIVE_SIGIL), Direction::parse),
-                Self::Relative,
+            preceded(
+                char(RELATIVE_SIGIL),
+                map(opt(Direction::parse), |dir| match dir {
+                    Some(dir) => Self::Relative(dir),
+                    None => Self::Itself,
+                }),
             ),
             map(preceded(char(LABEL_SIGIL), Identifier::parse), Self::Label),
         ))(i)
@@ -359,7 +363,9 @@ mod tests {
             Destination::parse,
             "#foo",
             Destination::Label(Identifier("foo")),
-        )
+        );
+
+        assert_parsed_eq(Destination::parse, "@", Destination::Itself);
     }
 
     #[test]
