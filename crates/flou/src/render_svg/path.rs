@@ -17,6 +17,15 @@ enum Axis {
     Y,
 }
 
+impl Axis {
+    fn from_dir(dir: Direction) -> Self {
+        match dir {
+            Direction::North | Direction::South => Self::Y,
+            Direction::West | Direction::East => Self::X,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum FreeAxisCount {
     Zero,
@@ -124,10 +133,16 @@ impl From<PosSide> for PaddedPos {
     }
 }
 
-fn get_best_corner<I: Into<PaddedPos>>(a: I, b: I) -> (PaddedPos, FreeAxisCount) {
-    let a = a.into();
-    let b = b.into();
-    let corners: (PaddedPos, PaddedPos) = (pos(a.x, b.y), pos(b.x, a.y));
+fn get_best_corner(a: PosSide, b: PosSide) -> (PaddedPos, FreeAxisCount) {
+    let a_pos = PaddedPos::from(a);
+    let b_pos = PaddedPos::from(b);
+
+    if PaddedPos::straight_line(a_pos, b_pos).is_some() {
+        let corner = a_pos + PaddedPos::from(a.side.rotate_clockwise());
+        return (corner, FreeAxisCount::from_pos(corner));
+    }
+
+    let corners: (PaddedPos, PaddedPos) = (pos(a_pos.x, b_pos.y), pos(b_pos.x, a_pos.y));
     let corners = (
         (corners.0, FreeAxisCount::from_pos(corners.0)),
         (corners.1, FreeAxisCount::from_pos(corners.1)),
@@ -136,14 +151,15 @@ fn get_best_corner<I: Into<PaddedPos>>(a: I, b: I) -> (PaddedPos, FreeAxisCount)
     std::cmp::max_by_key(corners.0, corners.1, |&(_, lane_count)| lane_count)
 }
 
-fn can_draw_straight_line(grid: &Grid, from: PosSide, to: PosSide) -> bool {
-    if let Some(dir) = PaddedPos::straight_line(from.into(), to.into()) {
-        if !PaddedPos::from(from).grid_aligned() {
-            return true;
-        }
+fn line_does_not_overlap_nodes(grid: &Grid, from: PosSide, to: PosSide) -> bool {
+    let from_pos: PaddedPos = from.into();
+    let to_pos: PaddedPos = to.into();
 
-        if IndexPos::straight_line(from.origin, to.origin).is_some() {
-            if let Some(dest) = grid.walk(from.origin, dir.into()) {
+    if let Some(dir) = PaddedPos::straight_line(from_pos, to_pos) {
+        if let FreeAxisCount::One(free) = FreeAxisCount::from_pos(from_pos) {
+            if Axis::from_dir(dir) == free {
+                return true;
+            } else if let Some(dest) = grid.walk(from.origin, dir.into()) {
                 if dest == to.origin {
                     return true;
                 }
@@ -166,9 +182,6 @@ pub(crate) fn get_path(
     let from = PosSide::new(from.0, from.1);
     let to = PosSide::new(to.0, to.1);
 
-    // TODO: Improve algorithm when from and to lie on the same line but can't
-    // be connected directly.
-
     let s_from: PaddedPos = from.into();
     let s_to: PaddedPos = to.into();
 
@@ -178,11 +191,6 @@ pub(crate) fn get_path(
 
     // TODO: Don't insert s_from and s_to if they lie on the line
     // that the first and last point make.
-    if can_draw_straight_line(grid, from, to) {
-        return vec![from.origin.into(), s_from, s_to, to.origin.into()];
-    }
-
-    let (corner, lane_count) = get_best_corner(s_from, s_to);
     let make_connection = |mid: Vec<PaddedPos>| {
         let mut res = vec![from.origin.into(), s_from];
         res.extend(mid);
@@ -190,6 +198,18 @@ pub(crate) fn get_path(
         res.push(to.origin.into());
         res
     };
+
+    if let Some(dir) = PaddedPos::straight_line(s_from, s_to) {
+        if line_does_not_overlap_nodes(grid, from, to) {
+            return make_connection(vec![]);
+        }
+
+        let offset = PaddedPos::from(dir.rotate_clockwise());
+
+        return make_connection(vec![s_from + offset, s_to + offset]);
+    }
+
+    let (corner, lane_count) = get_best_corner(from, to);
 
     match lane_count {
         FreeAxisCount::Two => make_connection(vec![corner]),
