@@ -1,7 +1,7 @@
 use nom::{
     branch::alt,
     character::complete::{char, line_ending, multispace0, not_line_ending},
-    combinator::{cut, map, opt, value},
+    combinator::{cut, map, opt, recognize, value},
     sequence::{delimited, pair, preceded},
 };
 use nom_supreme::{multi::collect_separated_terminated, tag::complete::tag, ParserExt};
@@ -28,30 +28,34 @@ pub(super) fn attribute<'i, O, V: Parser<'i, O>>(
     preceded(pair(tag(key), cut(ws(char(':')))), cut(value))
 }
 
-pub(super) fn enclosed_list0<'i, Item, Separator>(
+pub(super) fn enclosed_list0<'i, Item>(
     delimiters: (char, char),
     item: impl Parser<'i, Item>,
-    separator: impl Parser<'i, Separator>,
+    separator: char,
 ) -> impl Parser<'i, Vec<Item>> {
     preceded(
         char(delimiters.0).terminated(space),
         alt((
             map(char(delimiters.1).preceded_by(space), |_| Vec::default()),
-            collect_separated_terminated(
-                item,
-                ws(separator),
-                char(delimiters.1).preceded_by(space),
-            ),
+            list1(item, separator, delimiters.1),
         )),
     )
 }
 
-pub(super) fn list1<'i, Item, Separator, Terminator>(
+pub(super) fn list1<'i, Item>(
     item: impl Parser<'i, Item>,
-    separator: impl Parser<'i, Separator>,
-    terminator: impl Parser<'i, Terminator>,
+    separator: char,
+    terminator: char,
 ) -> impl Parser<'i, Vec<Item>> {
-    collect_separated_terminated(item, ws(separator), terminator.preceded_by(space))
+    collect_separated_terminated(
+        item,
+        ws(char(separator)),
+        alt((
+            recognize(pair(char(separator), char(terminator).preceded_by(space))),
+            recognize(char(terminator)),
+        ))
+        .preceded_by(space),
+    )
 }
 
 pub(super) fn block<'i, O, P: Parser<'i, O>>(item: P) -> impl Parser<'i, O> {

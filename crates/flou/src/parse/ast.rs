@@ -119,7 +119,7 @@ impl<'i> NodeAttribute<'i> {
     fn parse(i: Input<'i>) -> Result<Self> {
         let connection_descriptors = alt((
             map(ConnectionDescriptor::parse, |x| vec![x]),
-            enclosed_list0(BLOCK_DELIMITERS, ConnectionDescriptor::parse, tag(";")),
+            enclosed_list0(BLOCK_DELIMITERS, ConnectionDescriptor::parse, TERMINATOR),
         ));
 
         alt((
@@ -132,18 +132,21 @@ impl<'i> NodeAttribute<'i> {
 
     fn parse_vec(i: Input<'i>) -> Result<Vec<Self>> {
         alt((
-            map(quoted_string, |x| vec![Self::Text(x)]).terminated(char(LIST_DELIMITERS.1)),
+            map(quoted_string.terminated(opt(char(LIST_SEPARATOR))), |x| {
+                vec![Self::Text(x)]
+            })
+            .terminated(char(LIST_DELIMITERS.1)),
             map(
                 pair(
                     quoted_string.terminated(ws(char(LIST_SEPARATOR))),
-                    list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
+                    list1(Self::parse, LIST_SEPARATOR, LIST_DELIMITERS.1),
                 ),
                 |(text_shorthand, mut tail)| {
                     tail.insert(0, Self::Text(text_shorthand));
                     tail
                 },
             ),
-            list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
+            list1(Self::parse, LIST_SEPARATOR, LIST_DELIMITERS.1),
         ))
         .preceded_by(char(LIST_DELIMITERS.0))
         .parse(i)
@@ -228,14 +231,14 @@ impl ConnectionAttribute {
             map(
                 pair(
                     quoted_string.terminated(ws(char(LIST_SEPARATOR))),
-                    list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
+                    list1(Self::parse, LIST_SEPARATOR, LIST_DELIMITERS.1),
                 ),
                 |(text_shorthand, mut tail)| {
                     tail.insert(0, Self::Text(text_shorthand));
                     tail
                 },
             ),
-            list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
+            list1(Self::parse, LIST_SEPARATOR, LIST_DELIMITERS.1),
         ))
         .preceded_by(char(LIST_DELIMITERS.0))
         .parse(i)
@@ -281,7 +284,7 @@ impl<'i> Grid<'i> {
     pub(crate) fn parse(i: Input<'i>) -> Result<Self> {
         let empty = tag(EMPTY);
         let opt_node = alt((map(empty, |_| None), map(Node::parse, Some)));
-        let row = list1(opt_node, char(LIST_SEPARATOR), char(TERMINATOR));
+        let row = list1(opt_node, LIST_SEPARATOR, TERMINATOR);
         let grid = map(many1(ws(row)), Self);
 
         preceded(terminated(tag("grid"), space), block(grid))(i)
@@ -524,7 +527,7 @@ mod tests {
 
         assert_parsed_eq(
             Node::parse,
-            r#"foo("hello")"#,
+            r#"foo("hello",)"#,
             Node {
                 id: Identifier("foo"),
                 label: None,
@@ -534,7 +537,7 @@ mod tests {
 
         assert_parsed_eq(
             Node::parse,
-            r#"foo("hey", shape: diamond)"#,
+            r#"foo("hey", shape: diamond,)"#,
             Node {
                 id: Identifier("foo"),
                 label: None,
