@@ -14,6 +14,10 @@ tspan {
   dominant-baseline: middle;
 }
 
+.connection-text {
+  dominant-baseline: auto;
+}
+
 .path {
   fill: none;
   stroke: #1e1e1e;

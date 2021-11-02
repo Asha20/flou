@@ -6,8 +6,8 @@ use std::{
 
 use crate::{
     parse::ast::{
-        ConnectionAttribute, ConnectionDescriptor, Destination, Document, Grid as ASTGrid,
-        Identifier, NodeAttribute, NodeShape,
+        ConnectionAttribute, ConnectionDescriptor, Destination, Direction, Document,
+        Grid as ASTGrid, Identifier, NodeAttribute, NodeShape,
     },
     parse::Error as AstError,
     pos::IndexPos,
@@ -38,8 +38,8 @@ pub(crate) struct ConnectionAttributes {
 
 #[derive(Debug)]
 pub(crate) struct Connection {
-    pub(crate) from: IndexPos,
-    pub(crate) to: IndexPos,
+    pub(crate) from: (IndexPos, Direction),
+    pub(crate) to: (IndexPos, Direction),
     pub(crate) attrs: ConnectionAttributes,
 }
 
@@ -290,12 +290,19 @@ fn ensure_definitions_are_unique<'i>(
     }
 }
 
-type MapToIncompleteConnection<'i, T> = HashMap<T, Vec<(Destination<'i>, ConnectionAttributes)>>;
+#[derive(Debug, Clone)]
+struct UnresolvedConnection<'i> {
+    to: Destination<'i>,
+    sides: (Direction, Direction),
+    attrs: ConnectionAttributes,
+}
+
+type MapToUnresolvedConnection<'i, T> = HashMap<T, Vec<UnresolvedConnection<'i>>>;
 type MapToDuplicateAttrs<'i, T> = HashMap<T, HashMap<usize, HashSet<&'static str>>>;
 
 fn parse_connection_desc_map<T: Eq + std::hash::Hash + Copy>(
     def_connection_desc_map: HashMap<T, Vec<ConnectionDescriptor>>,
-) -> Result<MapToIncompleteConnection<T>, MapToDuplicateAttrs<T>> {
+) -> Result<MapToUnresolvedConnection<T>, MapToDuplicateAttrs<T>> {
     let mut errors = HashMap::new();
     let mut res = HashMap::new();
 
@@ -304,7 +311,11 @@ fn parse_connection_desc_map<T: Eq + std::hash::Hash + Copy>(
         for (i, descriptor) in descriptors.into_iter().enumerate() {
             match ConnectionAttributes::try_from(descriptor.attrs) {
                 Ok(attrs) => {
-                    value.push((descriptor.to, attrs));
+                    value.push(UnresolvedConnection {
+                        to: descriptor.to,
+                        sides: descriptor.sides,
+                        attrs,
+                    });
                 }
                 Err(duplicate_attrs) => {
                     errors
@@ -328,15 +339,19 @@ fn parse_connection_desc_map<T: Eq + std::hash::Hash + Copy>(
 fn resolve_connections_map<'i>(
     grid: &Grid<'i>,
     labels: &MapId<'i, IndexPos>,
-    connections_map: MapPos<Vec<(Destination<'i>, ConnectionAttributes)>>,
+    connections_map: MapPos<Vec<UnresolvedConnection<'i>>>,
 ) -> Result<Vec<Connection>, MapPos<HashMap<usize, ResolutionError<'i>>>> {
     let mut errors: MapPos<HashMap<usize, ResolutionError>> = HashMap::new();
     let mut res = Vec::new();
 
     for (from, connections) in connections_map {
-        for (i, (destination, attrs)) in connections.into_iter().enumerate() {
-            match grid.normalize_destination(from, destination, labels) {
-                Ok(to) => res.push(Connection { from, to, attrs }),
+        for (i, unresolved) in connections.into_iter().enumerate() {
+            match grid.normalize_destination(from, unresolved.to, labels) {
+                Ok(to) => res.push(Connection {
+                    from: (from, unresolved.sides.0),
+                    to: (to, unresolved.sides.1),
+                    attrs: unresolved.attrs,
+                }),
                 Err(resolution_error) => {
                     errors.entry(from).or_default().insert(i, resolution_error);
                 }
@@ -469,7 +484,7 @@ mod tests {
             grid: "foo; bar;",
             define: r#"
                 foo(shape: rect, shape: diamond);
-                bar(shape: rect, text: "hello", shape: diamond, connect: @s, text: "hey");
+                bar(shape: rect, text: "hello", shape: diamond, connect: n:n@s, text: "hey");
             "#,
         };
 
@@ -487,8 +502,8 @@ mod tests {
         let flou = parse_flou! {
             grid: "foo; bar;",
             define: r#"
-                foo(connect: @s(text: "hi", text: "hello"));
-                bar(connect: {@n(text: "hey", class: "hello"); @e(class: "hi", class: "hello")});
+                foo(connect: n:n@s(text: "hi", text: "hello"));
+                bar(connect: {n:n@n(text: "hey", class: "hello"); n:n@e(class: "hi", class: "hello")});
             "#,
         };
 
@@ -506,7 +521,7 @@ mod tests {
         let flou = parse_flou! {
             grid: r#"
                 foo(shape: rect, text: "hi", shape: diamond);
-                bar(connect: @s, shape: circle, text: "hello", shape: rect, connect: #end);
+                bar(connect: n:n@s, shape: circle, text: "hello", shape: rect, connect: n:n#end);
             "#,
         };
 
@@ -523,8 +538,8 @@ mod tests {
     fn duplicate_connection_attributes_in_grid() {
         let flou = parse_flou! {
             grid: r#"
-                foo(connect: @s(text: "hi", text: "hello"));
-                _, bar(connect: {@n(text: "hey", class: "hello"); @e(class: "hi", class: "hello")});
+                foo(connect: n:n@s(text: "hi", text: "hello"));
+                _, bar(connect: {n:n@n(text: "hey", class: "hello"); n:n@e(class: "hi", class: "hello")});
             "#,
         };
 
@@ -541,11 +556,11 @@ mod tests {
     fn invalid_destination() {
         let flou = parse_flou! {
             grid: r#"
-                start(connect: @n);
+                start(connect: n:n@n);
                 middle;
-                end(connect: {#foo; @e});
+                end(connect: {n:n#foo; n:n@e});
             "#,
-            define: "middle(connect: {@n; @s});",
+            define: "middle(connect: {n:n@n; n:n@s});",
         };
 
         assert_eq!(

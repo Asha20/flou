@@ -9,6 +9,10 @@ use crate::{
 
 use super::{path::get_path, viewport::Viewport};
 
+const ARROWHEAD_WIDTH: i32 = 10;
+const ARROWHEAD_HEIGHT: i32 = 10;
+const CONNECTION_TEXT_OFFSET: i32 = 20;
+
 impl Default for SvgRenderer {
     fn default() -> Self {
         Self {
@@ -187,7 +191,12 @@ impl SvgRenderer {
     fn render_connections<'i>(&self, flou: &'i Flou<'i>) -> Vec<SVGElement<'i>> {
         let mut connections = flou.connections.iter().collect::<Vec<_>>();
 
-        connections.sort_unstable_by(|a, b| a.from.y.cmp(&b.from.y).then(a.from.x.cmp(&b.from.x)));
+        connections.sort_unstable_by(|a, b| {
+            let a_pos = a.from.0;
+            let b_pos = b.from.0;
+
+            a_pos.y.cmp(&b_pos.y).then(a_pos.x.cmp(&b_pos.x))
+        });
 
         connections
             .into_iter()
@@ -196,7 +205,7 @@ impl SvgRenderer {
     }
 
     fn render_connection<'i>(&self, flou: &Flou<'i>, connection: &'i Connection) -> SVGElement<'i> {
-        let path = get_path(&flou.grid, (connection.from, None), (connection.to, None));
+        let path = get_path(&flou.grid, connection.from, connection.to);
 
         // It is assumed that path always has at least 2 points.
         let first_pair: &[PaddedPos] = &[path[1], path[0]];
@@ -219,20 +228,16 @@ impl SvgRenderer {
 
         let arrowhead = {
             let (point, dir) = link_points.last().cloned().unwrap();
-            let arrowhead_viewport = Viewport::new(point, pos(10, 10));
+            let arrowhead_viewport = Viewport::new(point, pos(ARROWHEAD_WIDTH, ARROWHEAD_HEIGHT));
             ArrowHead::render(arrowhead_viewport, dir.reverse()).class("arrowhead")
         };
 
         let svg_text = connection.attrs.text.as_ref().map(|text| {
-            let text_offset = 20;
-            let len = std::cmp::min(3, link_points.len());
-            let first_two = &link_points[..len];
-            let text_origin = match *first_two {
-                [from, to] if link_points.len() == 2 => {
+            let text_origin = match &link_points[..2] {
+                [from, to] => {
                     PixelPos::middle(from.0, to.0)
-                        + PixelPos::from(from.1.rotate_clockwise()) * text_offset
+                        + PixelPos::from(from.1.rotate_clockwise()) * CONNECTION_TEXT_OFFSET
                 }
-                [_, second, third] => second.0 + PixelPos::from(third.1) * text_offset,
                 // Again fine since it is assumed that path always has at least 2 points.
                 _ => unreachable!(),
             };

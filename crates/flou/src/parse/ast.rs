@@ -9,15 +9,18 @@ use nom::{
     },
     combinator::{map, opt, recognize, value, verify},
     multi::many1,
-    sequence::{pair, preceded, terminated, tuple},
+    sequence::{pair, preceded, separated_pair, terminated, tuple},
     Parser,
 };
 use nom_supreme::{final_parser::final_parser, tag::complete::tag, ParserExt};
 
-use crate::pos::{pos, IndexPos};
+use crate::{
+    parse::combinators::enclosed_list0,
+    pos::{pos, IndexPos},
+};
 
 use super::{
-    combinators::{attribute, block, enclosed_list1, list1, terminated_list1, ws},
+    combinators::{attribute, block, list1, ws},
     constants::*,
     parts::quoted_string,
     types::{Input, Result},
@@ -112,7 +115,7 @@ impl<'i> NodeAttribute<'i> {
     fn parse(i: Input<'i>) -> Result<Self> {
         let connection_descriptors = alt((
             map(ConnectionDescriptor::parse, |x| vec![x]),
-            enclosed_list1(BLOCK_DELIMITERS, ConnectionDescriptor::parse, tag(";")),
+            enclosed_list0(BLOCK_DELIMITERS, ConnectionDescriptor::parse, tag(";")),
         ));
 
         alt((
@@ -129,14 +132,14 @@ impl<'i> NodeAttribute<'i> {
             map(
                 pair(
                     quoted_string.terminated(ws(char(LIST_SEPARATOR))),
-                    terminated_list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
+                    list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
                 ),
                 |(text_shorthand, mut tail)| {
                     tail.insert(0, Self::Text(text_shorthand));
                     tail
                 },
             ),
-            terminated_list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
+            list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
         ))
         .preceded_by(char(LIST_DELIMITERS.0))
         .parse(i)
@@ -155,15 +158,23 @@ impl<'i> NodeAttribute<'i> {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub(crate) struct ConnectionDescriptor<'i> {
     pub(crate) to: Destination<'i>,
+    pub(crate) sides: (Direction, Direction),
     pub(crate) attrs: Vec<ConnectionAttribute>,
 }
 
 impl<'i> ConnectionDescriptor<'i> {
     pub(crate) fn parse(i: Input<'i>) -> Result<Self> {
+        let sides = separated_pair(Direction::parse, char(SIDES_SIGIL), Direction::parse);
+
         map(
-            pair(Destination::parse, opt(ConnectionAttribute::parse_vec)),
-            |(to, attrs)| Self {
+            tuple((
+                sides,
+                Destination::parse,
+                opt(ConnectionAttribute::parse_vec),
+            )),
+            |(sides, to, attrs)| Self {
                 to,
+                sides,
                 attrs: attrs.unwrap_or_default(),
             },
         )(i)
@@ -190,14 +201,14 @@ impl ConnectionAttribute {
             map(
                 pair(
                     quoted_string.terminated(ws(char(LIST_SEPARATOR))),
-                    terminated_list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
+                    list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
                 ),
                 |(text_shorthand, mut tail)| {
                     tail.insert(0, Self::Text(text_shorthand));
                     tail
                 },
             ),
-            terminated_list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
+            list1(Self::parse, char(LIST_SEPARATOR), char(LIST_DELIMITERS.1)),
         ))
         .preceded_by(char(LIST_DELIMITERS.0))
         .parse(i)
@@ -391,38 +402,62 @@ mod tests {
     fn valid_connection_descriptor() {
         assert_parsed_eq(
             ConnectionDescriptor::parse,
-            r#"@s("foo", class: "bar")"#,
+            r#"n:s@s("foo", class: "bar")"#,
             ConnectionDescriptor {
                 to: Destination::Relative(Direction::South),
+                sides: (Direction::North, Direction::South),
                 attrs: vec![
                     ConnectionAttribute::Text(String::from("foo")),
                     ConnectionAttribute::Class(String::from("bar")),
                 ],
             },
-        )
+        );
+
+        assert_parsed_eq(
+            ConnectionDescriptor::parse,
+            "w:e@s",
+            ConnectionDescriptor {
+                to: Destination::Relative(Direction::South),
+                sides: (Direction::West, Direction::East),
+                attrs: vec![],
+            },
+        );
+
+        assert_parsed_eq(
+            ConnectionDescriptor::parse,
+            "n:e@s",
+            ConnectionDescriptor {
+                to: Destination::Relative(Direction::South),
+                sides: (Direction::North, Direction::East),
+                attrs: vec![],
+            },
+        );
     }
 
     #[test]
     fn valid_node_connect_attribute() {
         assert_parsed_eq(
             NodeAttribute::parse,
-            "connect: @n",
+            "connect: n:e@n",
             NodeAttribute::Connect(vec![ConnectionDescriptor {
                 to: Destination::Relative(Direction::North),
+                sides: (Direction::North, Direction::East),
                 attrs: vec![],
             }]),
         );
 
         assert_parsed_eq(
             NodeAttribute::parse,
-            "connect: {@e; #foo}",
+            "connect: {n:n@e; n:n#foo}",
             NodeAttribute::Connect(vec![
                 ConnectionDescriptor {
                     to: Destination::Relative(Direction::East),
+                    sides: (Direction::North, Direction::North),
                     attrs: vec![],
                 },
                 ConnectionDescriptor {
                     to: Destination::Label(Identifier("foo")),
+                    sides: (Direction::North, Direction::North),
                     attrs: vec![],
                 },
             ]),

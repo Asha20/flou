@@ -11,13 +11,13 @@ use crate::{
     render_svg::renderer::PaddedPos,
 };
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum Axis {
     X,
     Y,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum FreeAxisCount {
     Zero,
     One(Axis),
@@ -30,8 +30,8 @@ impl FreeAxisCount {
         let y_aligned = pos.y & 1 == 1;
         match (x_aligned, y_aligned) {
             (false, false) => Self::Two,
-            (false, true) => Self::One(Axis::X),
-            (true, false) => Self::One(Axis::Y),
+            (false, true) => Self::One(Axis::Y),
+            (true, false) => Self::One(Axis::X),
             (true, true) => Self::Zero,
         }
     }
@@ -59,14 +59,11 @@ where
 
     pub(crate) fn straight_line(from: Self, to: Self) -> Option<Direction> {
         let distance = to - from;
-        match distance.x.cmp(&T::zero()) {
-            Ordering::Less => Some(Direction::West),
-            Ordering::Greater => Some(Direction::East),
-            Ordering::Equal => match distance.y.cmp(&T::zero()) {
-                Ordering::Less => Some(Direction::North),
-                Ordering::Greater => Some(Direction::South),
-                Ordering::Equal => None,
-            },
+
+        match (distance.x == T::zero(), distance.y == T::zero()) {
+            (false, false) | (true, true) => None,
+            (false, true) => Self::x_direction(from, to),
+            (true, false) => Self::y_direction(from, to),
         }
     }
 
@@ -127,65 +124,6 @@ impl From<PosSide> for PaddedPos {
     }
 }
 
-fn resolve_sides(
-    grid: &Grid,
-    (a, a_side): (IndexPos, Option<Direction>),
-    (b, b_side): (IndexPos, Option<Direction>),
-) -> (PosSide, PosSide) {
-    fn get_best_side(grid: &Grid, from: IndexPos, to: PosSide) -> Direction {
-        let sides = vec![
-            Direction::North,
-            Direction::South,
-            Direction::West,
-            Direction::East,
-        ];
-
-        sides
-            .into_iter()
-            .max_by(|&a_side, &b_side| {
-                let a = PosSide::new(from, a_side);
-                let b = PosSide::new(from, b_side);
-
-                let a_line = can_draw_straight_line(grid, a, to);
-                let b_line = can_draw_straight_line(grid, b, to);
-
-                a_line
-                    .cmp(&b_line)
-                    .then_with(|| {
-                        let dist_a = PaddedPos::taxicab(a.into(), to.into());
-                        let dist_b = PaddedPos::taxicab(b.into(), to.into());
-                        dist_a.cmp(&dist_b)
-                    })
-                    .then_with(|| get_best_corner(a, to).1.cmp(&get_best_corner(b, to).1))
-            })
-            .unwrap()
-    }
-
-    match (a_side, b_side) {
-        (None, None) => {
-            if a == b {
-                return (
-                    PosSide::new(a, Direction::West),
-                    PosSide::new(b, Direction::North),
-                );
-            }
-
-            let b_side = Direction::North;
-            let a_side = get_best_side(grid, a, PosSide::new(b, b_side));
-            (PosSide::new(a, a_side), PosSide::new(b, b_side))
-        }
-        (None, Some(b_side)) => {
-            let a_side = get_best_side(grid, a, PosSide::new(b, b_side));
-            (PosSide::new(a, a_side), PosSide::new(b, b_side))
-        }
-        (Some(a_side), None) => {
-            let b_side = get_best_side(grid, b, PosSide::new(a, a_side));
-            (PosSide::new(a, a_side), PosSide::new(b, b_side))
-        }
-        (Some(a_side), Some(b_side)) => (PosSide::new(a, a_side), PosSide::new(b, b_side)),
-    }
-}
-
 fn get_best_corner<I: Into<PaddedPos>>(a: I, b: I) -> (PaddedPos, FreeAxisCount) {
     let a = a.into();
     let b = b.into();
@@ -199,13 +137,15 @@ fn get_best_corner<I: Into<PaddedPos>>(a: I, b: I) -> (PaddedPos, FreeAxisCount)
 }
 
 fn can_draw_straight_line(grid: &Grid, from: PosSide, to: PosSide) -> bool {
-    if let Some(s_dir) = PaddedPos::straight_line(from.into(), to.into()) {
-        if let Some(dir) = IndexPos::straight_line(from.origin, to.origin) {
-            if s_dir == dir {
-                if let Some(dest) = grid.walk(from.origin, dir.into()) {
-                    if dest == to.origin {
-                        return true;
-                    }
+    if let Some(dir) = PaddedPos::straight_line(from.into(), to.into()) {
+        if !PaddedPos::from(from).grid_aligned() {
+            return true;
+        }
+
+        if IndexPos::straight_line(from.origin, to.origin).is_some() {
+            if let Some(dest) = grid.walk(from.origin, dir.into()) {
+                if dest == to.origin {
+                    return true;
                 }
             }
         }
@@ -214,20 +154,32 @@ fn can_draw_straight_line(grid: &Grid, from: PosSide, to: PosSide) -> bool {
     false
 }
 
-fn path_with_sides(grid: &Grid, from: PosSide, to: PosSide) -> Vec<PaddedPos> {
+pub(crate) fn get_path(
+    grid: &Grid,
+    from: (IndexPos, Direction),
+    to: (IndexPos, Direction),
+) -> Vec<PaddedPos> {
     if PaddedPos::PADDING != 1 {
         panic!("Algorithm is designed to work with a padding of 1");
     }
+
+    let from = PosSide::new(from.0, from.1);
+    let to = PosSide::new(to.0, to.1);
+
+    // TODO: Improve algorithm when from and to lie on the same line but can't
+    // be connected directly.
 
     let s_from: PaddedPos = from.into();
     let s_to: PaddedPos = to.into();
 
     if s_from == s_to {
-        return vec![from.into(), to.into()];
+        return vec![from.origin.into(), to.origin.into()];
     }
 
+    // TODO: Don't insert s_from and s_to if they lie on the line
+    // that the first and last point make.
     if can_draw_straight_line(grid, from, to) {
-        return vec![from.origin.into(), to.origin.into()];
+        return vec![from.origin.into(), s_from, s_to, to.origin.into()];
     }
 
     if from.origin == to.origin {
@@ -238,32 +190,40 @@ fn path_with_sides(grid: &Grid, from: PosSide, to: PosSide) -> Vec<PaddedPos> {
     }
 
     let (corner, lane_count) = get_best_corner(s_from, s_to);
-    let connect_to_corner =
-        |corner| vec![from.origin.into(), s_from, corner, s_to, to.origin.into()];
+    let make_connection = |mid: Vec<PaddedPos>| {
+        let mut res = vec![from.origin.into(), s_from];
+        res.extend(mid);
+        res.push(s_to);
+        res.push(to.origin.into());
+        res
+    };
 
     match lane_count {
-        FreeAxisCount::Two => connect_to_corner(corner),
+        FreeAxisCount::Two => make_connection(vec![corner]),
         FreeAxisCount::One(free_axis) => {
             let dirs = match free_axis {
                 Axis::X => (Direction::West, Direction::East),
                 Axis::Y => (Direction::North, Direction::South),
             };
             let corner_candidates = (
-                corner + PaddedPos::from(dirs.0),
-                corner + PaddedPos::from(dirs.1),
+                (dirs.0, corner + PaddedPos::from(dirs.0)),
+                (dirs.1, corner + PaddedPos::from(dirs.1)),
             );
-            let corner = std::cmp::min_by_key(corner_candidates.0, corner_candidates.1, |&c| {
+            let (dir, corner) = std::cmp::min_by_key(corner_candidates.0, corner_candidates.1, |&(_, c)| {
                 PaddedPos::taxicab(s_from, c) + PaddedPos::taxicab(s_to, c)
             });
 
-            connect_to_corner(corner)
+            let mut res = vec![];
+            if PaddedPos::straight_line(s_from, corner).is_none() {
+                res.push(s_from + PaddedPos::from(dir));
+            }
+            res.push(corner);
+            if PaddedPos::straight_line(s_to, corner).is_none() {
+                res.push(s_to + PaddedPos::from(dir));
+            }
+
+            make_connection(res)
         },
         FreeAxisCount::Zero => unreachable!("The FreeAxisCount of the two calculated corners can either be (0, 2) or (1, 1), so by taking the max we should never end up here."),
     }
-}
-
-type OriginOptSide = (IndexPos, Option<Direction>);
-pub(crate) fn get_path(grid: &Grid, from: OriginOptSide, to: OriginOptSide) -> Vec<PaddedPos> {
-    let (from, to) = resolve_sides(grid, from, to);
-    path_with_sides(grid, from, to)
 }
