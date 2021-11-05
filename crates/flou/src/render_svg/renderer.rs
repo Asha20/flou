@@ -274,7 +274,7 @@ impl SvgRenderer {
         point: PaddedPos,
         dir: Direction,
     ) -> PixelPos {
-        if !point.grid_aligned() {
+        let empty_offset = {
             let x = if point.grid_x_aligned() {
                 self.node.x / 2
             } else {
@@ -286,11 +286,16 @@ impl SvgRenderer {
                 self.grid_gap.y / 2
             };
 
-            return pos(x, y);
+            pos(x, y)
+        };
+
+        if !point.grid_aligned() || matches!(flou.grid.get_id(point.into()), Some(None)) {
+            return empty_offset;
         }
 
         let origin = self.calculate_node_origin(point.into());
         let viewport = Viewport::new(origin, self.node);
+
         match flou.node_attributes.get(&IndexPos::from(point)) {
             Some(attrs) => attrs.link_point(viewport, dir),
             None => NodeAttributes::default().link_point(viewport, dir),

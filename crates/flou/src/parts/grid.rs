@@ -29,7 +29,7 @@ impl<'i> Grid<'i> {
             Destination::Itself => Ok(from),
             Destination::Relative(dir) => {
                 let step = IndexPos::from(dir);
-                self.walk(from, step)
+                self.walk(from, None, step)
                     .ok_or(ResolutionError::InvalidDirection(dir))
             }
             Destination::Label(label) => labels
@@ -43,10 +43,25 @@ impl<'i> Grid<'i> {
         self.id_to_positions.get(id)
     }
 
-    pub(crate) fn walk(&self, start: IndexPos, step: IndexPos) -> Option<IndexPos> {
+    pub(crate) fn walk(
+        &self,
+        start: IndexPos,
+        end: Option<IndexPos>,
+        step: IndexPos,
+    ) -> Option<IndexPos> {
         let mut current = start;
         loop {
             current += step;
+
+            if let Some(end) = end {
+                if current == end {
+                    return match self.get_id(current) {
+                        None => None,                   // Out of bounds
+                        Some(Some(_)) => Some(current), // Ran into something
+                        Some(None) => None,             // Empty space
+                    };
+                }
+            }
 
             break match self.get_id(current) {
                 None => None,                   // Out of bounds
@@ -56,7 +71,7 @@ impl<'i> Grid<'i> {
         }
     }
 
-    fn get_id(&self, pos: IndexPos) -> Option<Option<&Identifier>> {
+    pub(crate) fn get_id(&self, pos: IndexPos) -> Option<Option<&Identifier>> {
         pos.in_bounds(self.size)
             .then(|| self.position_to_id.get(&pos))
     }

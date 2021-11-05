@@ -75,7 +75,7 @@ impl NodeShape {
                 let radius = diameter / 2;
 
                 SVGElement::new("circle")
-                    .class("circe")
+                    .class("circle")
                     .cpos(viewport.center())
                     .attr("r", radius.to_string())
             }

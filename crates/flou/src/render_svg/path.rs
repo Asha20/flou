@@ -5,7 +5,7 @@ use std::{cmp::Ordering, ops::Sub};
 use num_traits::Num;
 
 use crate::{
-    parse::ast::Direction,
+    parse::ast::{Direction, Identifier},
     parts::Grid,
     pos::{pos, IndexPos, Position2D},
     render_svg::renderer::PaddedPos,
@@ -133,7 +133,45 @@ impl From<PosSide> for PaddedPos {
     }
 }
 
-fn get_best_corner(a: PosSide, b: PosSide) -> (PaddedPos, FreeAxisCount) {
+impl Grid<'_> {
+    fn padded_get_id(&self, pos: PaddedPos) -> Option<Option<&Identifier>> {
+        pos.in_bounds(self.size.into())
+            .then(|| match pos.grid_aligned() {
+                true => self.position_to_id.get(&pos.into()),
+                false => None,
+            })
+    }
+
+    fn padded_walk(
+        &self,
+        start: PaddedPos,
+        end: Option<PaddedPos>,
+        step: PaddedPos,
+    ) -> Option<PaddedPos> {
+        let mut current = start;
+        loop {
+            current += step;
+
+            if let Some(end) = end {
+                if current == end {
+                    return match self.padded_get_id(current) {
+                        None => None,                   // Out of bounds
+                        Some(Some(_)) => Some(current), // Ran into something
+                        Some(None) => None,             // Empty space
+                    };
+                }
+            }
+
+            break match self.padded_get_id(current) {
+                None => None,                   // Out of bounds
+                Some(Some(_)) => Some(current), // Ran into something; stop immediately
+                Some(None) => continue,         // Empty space; keep moving
+            };
+        }
+    }
+}
+
+fn get_best_corner(grid: &Grid, a: PosSide, b: PosSide) -> (PaddedPos, FreeAxisCount) {
     let a_pos = PaddedPos::from(a);
     let b_pos = PaddedPos::from(b);
 
@@ -142,32 +180,66 @@ fn get_best_corner(a: PosSide, b: PosSide) -> (PaddedPos, FreeAxisCount) {
         return (corner, FreeAxisCount::from_pos(corner));
     }
 
-    let corners: (PaddedPos, PaddedPos) = (pos(a_pos.x, b_pos.y), pos(b_pos.x, a_pos.y));
-    let corners = (
-        (corners.0, FreeAxisCount::from_pos(corners.0)),
-        (corners.1, FreeAxisCount::from_pos(corners.1)),
-    );
+    let corners = [pos(a_pos.x, b_pos.y), pos(b_pos.x, a_pos.y)];
+    let mut corners = vec![
+        (corners[0], FreeAxisCount::from_pos(corners[0])),
+        (corners[1], FreeAxisCount::from_pos(corners[1])),
+    ];
 
-    std::cmp::max_by_key(corners.0, corners.1, |&(_, lane_count)| lane_count)
+    corners
+        .sort_unstable_by(|(_, a_lane_count), (_, b_lane_count)| a_lane_count.cmp(&b_lane_count));
+
+    let (smaller, larger) = (corners[0], corners[1]);
+
+    let can_make_direct_connection = |from: PosSide, to: PosSide, corner: PaddedPos| -> bool {
+        line_does_not_overlap_nodes(grid, from, corner)
+            && line_does_not_overlap_nodes(grid, to, corner)
+    };
+
+    match smaller.1 {
+        FreeAxisCount::Zero => {
+            if can_make_direct_connection(a, b, smaller.0) {
+                (smaller.0, FreeAxisCount::Two)
+            } else {
+                larger
+            }
+        }
+        FreeAxisCount::One(_) => {
+            if can_make_direct_connection(a, b, smaller.0) {
+                (smaller.0, FreeAxisCount::Two)
+            } else if can_make_direct_connection(a, b, larger.0) {
+                (larger.0, FreeAxisCount::Two)
+            } else {
+                unreachable!()
+            }
+        }
+        FreeAxisCount::Two => unreachable!(),
+    }
 }
 
-fn line_does_not_overlap_nodes(grid: &Grid, from: PosSide, to: PosSide) -> bool {
-    let from_pos: PaddedPos = from.into();
-    let to_pos: PaddedPos = to.into();
-
-    if let Some(dir) = PaddedPos::straight_line(from_pos, to_pos) {
-        if let FreeAxisCount::One(free) = FreeAxisCount::from_pos(from_pos) {
-            if Axis::from_dir(dir) == free {
-                return true;
-            } else if let Some(dest) = grid.walk(from.origin, dir.into()) {
-                if dest == to.origin {
+fn line_does_not_overlap_nodes(
+    grid: &Grid,
+    from: impl Into<PaddedPos>,
+    to: impl Into<PaddedPos>,
+) -> bool {
+    fn inner(grid: &Grid, from: PaddedPos, to: PaddedPos) -> bool {
+        if let Some(dir) = PaddedPos::straight_line(from, to) {
+            if let FreeAxisCount::One(free) = FreeAxisCount::from_pos(from) {
+                if Axis::from_dir(dir) == free {
                     return true;
+                } else {
+                    return match grid.padded_walk(from, Some(to), dir.into()) {
+                        Some(dest) => dest == to,
+                        None => true,
+                    };
                 }
             }
         }
+
+        false
     }
 
-    false
+    inner(grid, from.into(), to.into())
 }
 
 pub(crate) fn get_path(
@@ -209,7 +281,7 @@ pub(crate) fn get_path(
         return make_connection(vec![s_from + offset, s_to + offset]);
     }
 
-    let (corner, lane_count) = get_best_corner(from, to);
+    let (corner, lane_count) = get_best_corner(grid, from, to);
 
     match lane_count {
         FreeAxisCount::Two => make_connection(vec![corner]),
