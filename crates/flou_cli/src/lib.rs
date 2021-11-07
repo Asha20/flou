@@ -1,4 +1,4 @@
-use flou::{Flou, FlouError, LogicError, Renderer, ResolutionError, SvgRenderer};
+use flou::{Flou, FlouError, LogicError, RenderConfig, Renderer, ResolutionError, SvgRenderer};
 use std::convert::TryFrom;
 use std::fmt;
 use std::io::{BufWriter, Write};
@@ -100,8 +100,21 @@ pub fn run(opt: Opt) -> Result<(), Error> {
 
     let flou = Flou::try_from(input.as_str()).map_err(|x| Error::Parse(flou_error_to_string(x)))?;
 
-    let renderer = SvgRenderer::new(opt.node, opt.gap);
-    let output = renderer.render(&flou, !opt.no_default_css, css);
+    let mut config = RenderConfig {
+        css,
+        default_css: !opt.no_default_css,
+        ..Default::default()
+    };
+
+    if let Some(node) = opt.node {
+        config.node = node.into();
+    }
+
+    if let Some(gap) = opt.gap {
+        config.grid_gap = gap.into();
+    }
+
+    let output = SvgRenderer::render(&flou, &config);
 
     write!(writer, "{}", output).map_err(Error::OutputWrite)?;
 

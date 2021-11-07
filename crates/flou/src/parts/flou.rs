@@ -10,7 +10,7 @@ use crate::{
         Grid as ASTGrid, Identifier, NodeAttribute, NodeShape,
     },
     parse::Error as AstError,
-    pos::IndexPos,
+    pos::{pos, IndexPos, PixelPos},
 };
 
 use super::{
@@ -67,13 +67,30 @@ impl<'i> TryFrom<&'i str> for Flou<'i> {
     }
 }
 
+pub struct RenderConfig {
+    pub default_css: bool,
+    pub css: Vec<String>,
+
+    // Element sizes
+    pub arrowhead: PixelPos,
+    pub node: PixelPos,
+    pub grid_gap: PixelPos,
+}
+
+impl Default for RenderConfig {
+    fn default() -> Self {
+        Self {
+            default_css: true,
+            css: Vec::new(),
+            arrowhead: pos(10, 10),
+            node: pos(200, 100),
+            grid_gap: pos(50, 50),
+        }
+    }
+}
+
 pub trait Renderer {
-    fn render<'i>(
-        &self,
-        flou: &'i Flou<'i>,
-        default_css: bool,
-        css: Vec<String>,
-    ) -> Box<dyn Display + 'i>;
+    fn render<'i>(flou: &'i Flou<'i>, config: &'i RenderConfig) -> Box<dyn Display + 'i>;
 }
 
 impl<'i> TryFrom<Document<'i>> for Flou<'i> {
