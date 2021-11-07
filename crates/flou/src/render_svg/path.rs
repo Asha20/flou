@@ -210,7 +210,7 @@ fn get_best_corner(grid: &Grid, a: PosSide, b: PosSide) -> (PaddedPos, FreeAxisC
             } else if can_make_direct_connection(a, b, larger.0) {
                 (larger.0, FreeAxisCount::Two)
             } else {
-                unreachable!()
+                larger
             }
         }
         FreeAxisCount::Two => unreachable!(),
