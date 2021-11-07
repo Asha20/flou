@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="550" height="350">
+  <style>.background {
+  fill: #eee;
+}
+
+.node {
+  fill: #fff;
+  stroke: #1e1e1e;
+}
+
+text,
+tspan {
+  fill: #1e1e1e;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.connection-text {
+  dominant-baseline: auto;
+}
+
+.path {
+  fill: none;
+  stroke: #1e1e1e;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.connection .arrowhead {
+  stroke: #1e1e1e;
+  fill: #1e1e1e;
+}</style>
+  <rect class="background" x="0" y="0" width="550" height="350" />
+  <g class="nodes">
+    <g class="node-wrapper">
+      <rect class="rectangle node" x="50" y="50" width="200" height="100" />
+      <text x="150" y="100">Destination 1</text>
+    </g>
+    <g class="node-wrapper">
+      <rect class="rectangle node" x="300" y="50" width="200" height="100" />
+      <text x="400" y="100">Source</text>
+    </g>
+    <g class="node-wrapper">
+      <rect class="rectangle node" x="300" y="200" width="200" height="100" />
+      <text x="400" y="250">Destination 2</text>
+    </g>
+  </g>
+  <g class="connections">
+    <g class="connection">
+      <path class="path" d="M 300 100 L 250 100" />
+      <text class="connection-text" x="275" y="80">1</text>
+      <path class="arrowhead" d="M 250 100 L 260 105 L 255 100 L 260 95 L 250 100" />
+    </g>
+    <g class="connection">
+      <path class="path" d="M 400 150 L 400 200" />
+      <text class="connection-text" x="380" y="175">2</text>
+      <path class="arrowhead" d="M 400 200 L 405 190 L 400 195 L 395 190 L 400 200" />
+    </g>
+  </g>
+</svg>

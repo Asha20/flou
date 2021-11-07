@@ -1,0 +1,220 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Making connections - flou Documentation</title>
+        <!-- Custom HTML head -->
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="../install.html">Installation</a></li><li class="chapter-item expanded "><a href="../syntax/index.html"><strong aria-hidden="true">1.</strong> Syntax</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../syntax/hello_world.html"><strong aria-hidden="true">1.1.</strong> Hello World!</a></li><li class="chapter-item expanded "><a href="../syntax/making_connections.html" class="active"><strong aria-hidden="true">1.2.</strong> Making connections</a></li><li class="chapter-item expanded "><a href="../syntax/define_block.html"><strong aria-hidden="true">1.3.</strong> Using a define block</a></li><li class="chapter-item expanded "><a href="../syntax/list_of_attributes.html"><strong aria-hidden="true">1.4.</strong> List of attributes</a></li></ol></li><li class="chapter-item expanded "><a href="../cli.html"><strong aria-hidden="true">2.</strong> CLI</a></li><li class="chapter-item expanded "><a href="../styling_flowchart.html"><strong aria-hidden="true">3.</strong> Styling your flowchart</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">flou Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h2 id="making-connections"><a class="header" href="#making-connections">Making connections</a></h2>
+<h3 id="absolute-connections"><a class="header" href="#absolute-connections">Absolute connections</a></h3>
+<p>Here's a flowchart with two connected nodes:</p>
+<pre><code class="language-js">grid {
+    block(&quot;Source&quot;, connect: s:n#dest);
+    block#dest(&quot;Destination&quot;);
+}
+</code></pre>
+<p><img src="making_connections/example1.svg" alt="Example 1" /></p>
+<p>We've attached <code>#dest</code> to the destination node's identifier. This is called a <em>label</em>. Two nodes cannot have the same label. The connection itself is represented with a <code>connect</code> attribute on the source node. The connection declaration above can be split into two parts: <code>s:n</code> and <code>#dest</code>.</p>
+<ul>
+<li><code>s:n</code> means that we'd like to connect the <strong>south</strong> side of the source node to the <strong>north</strong> side of the destination node.</li>
+<li><code>#dest</code> is the destination. Here it means that the destination node is the one with the label <code>dest</code>.</li>
+</ul>
+<h3 id="relative-connections"><a class="header" href="#relative-connections">Relative connections</a></h3>
+<p>Having to keep track of various labels can get messy fast. We could simplify the previous example like so:</p>
+<pre><code class="language-js">grid {
+    block(&quot;Source&quot;, connect: s:n@s);
+    block(&quot;Destination&quot;);
+}
+</code></pre>
+<p>Instead of a label on the destination node we used <code>@s</code> as the connection destination, meaning &quot;the node directly <strong>south</strong> of me&quot;. Relative connections are easier to understand and don't require labels, but can't represent all possible connections like absolute ones can.</p>
+<h3 id="self-connection"><a class="header" href="#self-connection">Self connection</a></h3>
+<p>A node can be connected to itself like so:</p>
+<pre><code class="language-js">grid {
+    block(&quot;Source and destination&quot;, connect: s:n@);
+}
+</code></pre>
+<p><img src="making_connections/example2.svg" alt="Example 2" /></p>
+<h3 id="connection-attributes"><a class="header" href="#connection-attributes">Connection attributes</a></h3>
+<p>Certain attributes can be set on connections just like on nodes. Here's an example:</p>
+<pre><code class="language-js">grid {
+    block(&quot;Source&quot;, connect: e:w@e(&quot;Yes&quot;)), block(&quot;Destination&quot;);
+}
+</code></pre>
+<p><img src="making_connections/example3.svg" alt="Example 3" /></p>
+<h3 id="multiple-connections"><a class="header" href="#multiple-connections">Multiple connections</a></h3>
+<p>A node may also define multiple connections like so:</p>
+<pre><code class="language-js">grid {
+    block(&quot;Destination 1&quot;), block(&quot;Source&quot;, connect: { w:e@w(&quot;1&quot;); s:n@s(&quot;2&quot;) });
+    _,                      block(&quot;Destination 2&quot;);
+}
+</code></pre>
+<p><img src="making_connections/example4.svg" alt="Example 4" /></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../syntax/hello_world.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                            <a rel="next" href="../syntax/define_block.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../syntax/hello_world.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                    <a rel="next" href="../syntax/define_block.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+    </body>
+</html>

@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="550" height="800">
+  <style>.background {
+  fill: #eee;
+}
+
+.node {
+  fill: #fff;
+  stroke: #1e1e1e;
+}
+
+text,
+tspan {
+  fill: #1e1e1e;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.connection-text {
+  dominant-baseline: auto;
+}
+
+.path {
+  fill: none;
+  stroke: #1e1e1e;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.connection .arrowhead {
+  stroke: #1e1e1e;
+  fill: #1e1e1e;
+}</style>
+  <rect class="background" x="0" y="0" width="550" height="800" />
+  <g class="nodes">
+    <g class="node-wrapper pink">
+      <rect class="rectangle node" x="50" y="50" width="200" height="100" />
+      <text x="150" y="100">Think about going outside</text>
+    </g>
+    <g class="node-wrapper yellow">
+      <path class="diamond node" d="M 150 200 L 50 250 L 150 300 L 250 250 Z" />
+      <text x="150" y="250">Is it raining?</text>
+    </g>
+    <g class="node-wrapper pink">
+      <rect class="rectangle node" x="300" y="200" width="200" height="100" />
+      <text x="400" y="250">Stay inside</text>
+    </g>
+    <g class="node-wrapper yellow">
+      <path class="diamond node" d="M 150 350 L 50 400 L 150 450 L 250 400 Z" />
+      <text x="150" y="400">Is it cold?</text>
+    </g>
+    <g class="node-wrapper yellow">
+      <path class="diamond node" d="M 150 500 L 50 550 L 150 600 L 250 550 Z" />
+      <text x="150" y="550">Is it night?</text>
+    </g>
+    <g class="node-wrapper pink">
+      <rect class="rectangle node" x="50" y="650" width="200" height="100" />
+      <text x="150" y="700">Go outside</text>
+    </g>
+  </g>
+  <g class="connections">
+    <g class="connection">
+      <path class="path" d="M 150 150 L 150 200" />
+      <path class="arrowhead" d="M 150 200 L 155 190 L 150 195 L 145 190 L 150 200" />
+    </g>
+    <g class="connection">
+      <path class="path" d="M 150 300 L 150 350" />
+      <text class="connection-text" x="130" y="325">No</text>
+      <path class="arrowhead" d="M 150 350 L 155 340 L 150 345 L 145 340 L 150 350" />
+    </g>
+    <g class="connection">
+      <path class="path" d="M 250 250 L 300 250" />
+      <text class="connection-text" x="275" y="270">Yes</text>
+      <path class="arrowhead" d="M 300 250 L 290 245 L 295 250 L 290 255 L 300 250" />
+    </g>
+    <g class="connection">
+      <path class="path" d="M 150 450 L 150 500" />
+      <text class="connection-text" x="130" y="475">No</text>
+      <path class="arrowhead" d="M 150 500 L 155 490 L 150 495 L 145 490 L 150 500" />
+    </g>
+    <g class="connection">
+      <path class="path" d="M 250 400 L 275 400 L 275 250 L 300 250" />
+      <text class="connection-text" x="262" y="420">Yes</text>
+      <path class="arrowhead" d="M 300 250 L 290 245 L 295 250 L 290 255 L 300 250" />
+    </g>
+    <g class="connection">
+      <path class="path" d="M 150 600 L 150 650" />
+      <text class="connection-text" x="130" y="625">No</text>
+      <path class="arrowhead" d="M 150 650 L 155 640 L 150 645 L 145 640 L 150 650" />
+    </g>
+    <g class="connection">
+      <path class="path" d="M 250 550 L 275 550 L 275 250 L 300 250" />
+      <text class="connection-text" x="262" y="570">Yes</text>
+      <path class="arrowhead" d="M 300 250 L 290 245 L 295 250 L 290 255 L 300 250" />
+    </g>
+  </g>
+</svg>

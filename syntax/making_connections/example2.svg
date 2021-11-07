@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200">
+  <style>.background {
+  fill: #eee;
+}
+
+.node {
+  fill: #fff;
+  stroke: #1e1e1e;
+}
+
+text,
+tspan {
+  fill: #1e1e1e;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.connection-text {
+  dominant-baseline: auto;
+}
+
+.path {
+  fill: none;
+  stroke: #1e1e1e;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.connection .arrowhead {
+  stroke: #1e1e1e;
+  fill: #1e1e1e;
+}</style>
+  <rect class="background" x="0" y="0" width="300" height="200" />
+  <g class="nodes">
+    <g class="node-wrapper">
+      <rect class="rectangle node" x="50" y="50" width="200" height="100" />
+      <text x="150" y="100">Source and destination</text>
+    </g>
+  </g>
+  <g class="connections">
+    <g class="connection">
+      <path class="path" d="M 150 150 L 150 175 L 275 175 L 275 25 L 150 25 L 150 50" />
+      <path class="arrowhead" d="M 150 50 L 155 40 L 150 45 L 145 40 L 150 50" />
+    </g>
+  </g>
+</svg>

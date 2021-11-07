@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="650">
+  <style>.background {
+  fill: #eee;
+}
+
+.node {
+  fill: #fff;
+  stroke: #1e1e1e;
+}
+
+.pink .node {
+    fill: #ffe9ec;
+}
+
+text,
+tspan {
+  fill: #1e1e1e;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.connection-text {
+  dominant-baseline: auto;
+}
+
+.path {
+  fill: none;
+  stroke: #1e1e1e;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.connection .arrowhead {
+  stroke: #1e1e1e;
+  fill: #1e1e1e;
+}</style>
+  <rect class="background" x="0" y="0" width="300" height="650" />
+  <g class="nodes">
+    <g class="node-wrapper pink">
+      <ellipse class="ellipse node" cx="150" cy="100" rx="100" ry="50" />
+      <text x="150" y="100">Step one</text>
+    </g>
+    <g class="node-wrapper pink">
+      <ellipse class="ellipse node" cx="150" cy="250" rx="100" ry="50" />
+      <text x="150" y="250">Step two</text>
+    </g>
+    <g class="node-wrapper pink">
+      <ellipse class="ellipse node" cx="150" cy="400" rx="100" ry="50" />
+      <text x="150" y="400">Step three</text>
+    </g>
+    <g class="node-wrapper pink">
+      <ellipse class="ellipse node" cx="150" cy="550" rx="100" ry="50" />
+      <text x="150" y="550">Step four</text>
+    </g>
+  </g>
+  <g class="connections">
+    <g class="connection">
+      <path class="path" d="M 150 150 L 150 200" />
+      <path class="arrowhead" d="M 150 200 L 155 190 L 150 195 L 145 190 L 150 200" />
+    </g>
+    <g class="connection">
+      <path class="path" d="M 150 300 L 150 350" />
+      <path class="arrowhead" d="M 150 350 L 155 340 L 150 345 L 145 340 L 150 350" />
+    </g>
+    <g class="connection">
+      <path class="path" d="M 150 450 L 150 500" />
+      <path class="arrowhead" d="M 150 500 L 155 490 L 150 495 L 145 490 L 150 500" />
+    </g>
+  </g>
+</svg>

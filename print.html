@@ -1,0 +1,502 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>flou Documentation</title>
+        <meta name="robots" content="noindex" />
+        <!-- Custom HTML head -->
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="install.html">Installation</a></li><li class="chapter-item expanded "><a href="syntax/index.html"><strong aria-hidden="true">1.</strong> Syntax</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="syntax/hello_world.html"><strong aria-hidden="true">1.1.</strong> Hello World!</a></li><li class="chapter-item expanded "><a href="syntax/making_connections.html"><strong aria-hidden="true">1.2.</strong> Making connections</a></li><li class="chapter-item expanded "><a href="syntax/define_block.html"><strong aria-hidden="true">1.3.</strong> Using a define block</a></li><li class="chapter-item expanded "><a href="syntax/list_of_attributes.html"><strong aria-hidden="true">1.4.</strong> List of attributes</a></li></ol></li><li class="chapter-item expanded "><a href="cli.html"><strong aria-hidden="true">2.</strong> CLI</a></li><li class="chapter-item expanded "><a href="styling_flowchart.html"><strong aria-hidden="true">3.</strong> Styling your flowchart</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">flou Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h2 id="introduction"><a class="header" href="#introduction">Introduction</a></h2>
+<h3 id="what-is-flou"><a class="header" href="#what-is-flou">What is Flou?</a></h3>
+<p>Flou is a <a href="https://en.wikipedia.org/wiki/Domain-specific_language">domain-specific language</a> for describing flowcharts. It is also a CLI of the same name that renders the previously mentioned flowchart description into an SVG file.</p>
+<p>Flou's goal is to offer a textual representation of flowcharts.</p>
+<h3 id="reasons-to-use-flou"><a class="header" href="#reasons-to-use-flou">Reasons to use Flou?</a></h3>
+<ul>
+<li>If you need to generate a flowchart automatically, you can write a program that generates Flou DSL and then use the CLI tool to compile the DSL into an image.</li>
+<li>Textual representation avoids easy-to-miss slight design inconsistencies that might occur when creating a flowchart with a visual design software.</li>
+<li>Flou makes modifying shared flowchart parts straightforward and painless.</li>
+<li>A textual flowchart representation is more suited for version control.</li>
+</ul>
+<h3 id="reasons-not-to-use-flou"><a class="header" href="#reasons-not-to-use-flou">Reasons NOT to use Flou?</a></h3>
+<ul>
+<li>It's still in beta. This means some features might be unpolished.</li>
+<li>Connections that happen to have overlapping segments can bring visual ambiguity since Flou CLI won't render them side by side and will overlap them instead. However, this issue can be offset by the user since they can pick and choose the connection sides.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="installation"><a class="header" href="#installation">Installation</a></h2>
+<p>TODO</p>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="syntax"><a class="header" href="#syntax">Syntax</a></h2>
+<p>This section talks about Flou's syntax. You'll learn:</p>
+<ul>
+<li>How to define flowcharts using <code>grid</code>.</li>
+<li>How to reuse common parts using <code>define</code>.</li>
+<li>All the various attributes nodes and connections can have.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="hello-world"><a class="header" href="#hello-world">Hello World!</a></h2>
+<p>Let's create our first flowchart:</p>
+<pre><code class="language-js">grid {
+    // This is a comment
+    block(text: &quot;Hello World!&quot;, shape: rect);
+}
+</code></pre>
+<p><img src="syntax/hello_world/example1.svg" alt="Example 1" /></p>
+<p>In Flou, all flowcharts are represented with a <em>grid</em>. The basic building blocks of grids are <em>nodes</em>. Our Hello World flowchart has a single node. <code>block</code> is that node's <em>identifier</em>. <code>block</code> is completely arbitrary and can be replaced with anything else. We'll talk more about identifiers and why they're useful later. Other than the identifier, we've included some basic <em>attributes</em> on our node. Also, line-comments can be defined using <code>//</code>.</p>
+<h3 id="shorthands"><a class="header" href="#shorthands">Shorthands</a></h3>
+<p>Since <code>text</code> is the most commonly used attribute, it has a convenient shorthand. We could use the following form and get the same result:</p>
+<pre><code class="language-js">grid {
+    block(&quot;Hello World!&quot;, shape: rect);
+}
+</code></pre>
+<p>When using the text shorthand, the text string needs to be the first element of the attribute list. For example, this is invalid:</p>
+<pre><code class="language-js">grid {
+    block(shape: rect, &quot;Hello World!&quot;);
+}
+</code></pre>
+<p>Rectangle is the default node shape, so we could also omit the <code>shape</code> attribute:</p>
+<pre><code class="language-js">grid {
+    block(&quot;Hello World!&quot;);
+}
+</code></pre>
+<h3 id="more-nodes"><a class="header" href="#more-nodes">More nodes</a></h3>
+<p>A flowchart with a single node isn't that interesting to look at, so let's add some more nodes. Grid rows are separated with a semicolon, while grid columns are separated with a comma. If you want to leave some space intentionally empty like in the third row, use the special <code>_</code> node.</p>
+<pre><code class="language-js">grid {
+    block(&quot;One&quot;),     block(&quot;Two&quot;);
+    block(&quot;Three&quot;);
+    _,                block(&quot;Four&quot;);
+}
+</code></pre>
+<p><img src="syntax/hello_world/example2.svg" alt="Example 2" /></p>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="making-connections"><a class="header" href="#making-connections">Making connections</a></h2>
+<h3 id="absolute-connections"><a class="header" href="#absolute-connections">Absolute connections</a></h3>
+<p>Here's a flowchart with two connected nodes:</p>
+<pre><code class="language-js">grid {
+    block(&quot;Source&quot;, connect: s:n#dest);
+    block#dest(&quot;Destination&quot;);
+}
+</code></pre>
+<p><img src="syntax/making_connections/example1.svg" alt="Example 1" /></p>
+<p>We've attached <code>#dest</code> to the destination node's identifier. This is called a <em>label</em>. Two nodes cannot have the same label. The connection itself is represented with a <code>connect</code> attribute on the source node. The connection declaration above can be split into two parts: <code>s:n</code> and <code>#dest</code>.</p>
+<ul>
+<li><code>s:n</code> means that we'd like to connect the <strong>south</strong> side of the source node to the <strong>north</strong> side of the destination node.</li>
+<li><code>#dest</code> is the destination. Here it means that the destination node is the one with the label <code>dest</code>.</li>
+</ul>
+<h3 id="relative-connections"><a class="header" href="#relative-connections">Relative connections</a></h3>
+<p>Having to keep track of various labels can get messy fast. We could simplify the previous example like so:</p>
+<pre><code class="language-js">grid {
+    block(&quot;Source&quot;, connect: s:n@s);
+    block(&quot;Destination&quot;);
+}
+</code></pre>
+<p>Instead of a label on the destination node we used <code>@s</code> as the connection destination, meaning &quot;the node directly <strong>south</strong> of me&quot;. Relative connections are easier to understand and don't require labels, but can't represent all possible connections like absolute ones can.</p>
+<h3 id="self-connection"><a class="header" href="#self-connection">Self connection</a></h3>
+<p>A node can be connected to itself like so:</p>
+<pre><code class="language-js">grid {
+    block(&quot;Source and destination&quot;, connect: s:n@);
+}
+</code></pre>
+<p><img src="syntax/making_connections/example2.svg" alt="Example 2" /></p>
+<h3 id="connection-attributes"><a class="header" href="#connection-attributes">Connection attributes</a></h3>
+<p>Certain attributes can be set on connections just like on nodes. Here's an example:</p>
+<pre><code class="language-js">grid {
+    block(&quot;Source&quot;, connect: e:w@e(&quot;Yes&quot;)), block(&quot;Destination&quot;);
+}
+</code></pre>
+<p><img src="syntax/making_connections/example3.svg" alt="Example 3" /></p>
+<h3 id="multiple-connections"><a class="header" href="#multiple-connections">Multiple connections</a></h3>
+<p>A node may also define multiple connections like so:</p>
+<pre><code class="language-js">grid {
+    block(&quot;Destination 1&quot;), block(&quot;Source&quot;, connect: { w:e@w(&quot;1&quot;); s:n@s(&quot;2&quot;) });
+    _,                      block(&quot;Destination 2&quot;);
+}
+</code></pre>
+<p><img src="syntax/making_connections/example4.svg" alt="Example 4" /></p>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="using-a-define-block"><a class="header" href="#using-a-define-block">Using a define block</a></h2>
+<p>Let's take a look at the following flowchart:</p>
+<pre><code class="language-js">grid {
+    block(&quot;Think about going outside&quot;, class: &quot;pink&quot;, connect: s:n@s);
+    condition(&quot;Is it raining?&quot;, shape: diamond, class: &quot;yellow&quot;, connect: { s:n@s(&quot;No&quot;); e:w#stay(&quot;Yes&quot;) }), block#stay(&quot;Stay inside&quot;, class: &quot;pink&quot;);
+    condition(&quot;Is it cold?&quot;, shape: diamond, class: &quot;yellow&quot;, connect: { s:n@s(&quot;No&quot;); e:w#stay(&quot;Yes&quot;) });
+    condition(&quot;Is it night?&quot;, shape: diamond, class: &quot;yellow&quot;, connect: { s:n@s(&quot;No&quot;); e:w#stay(&quot;Yes&quot;) });
+    block(&quot;Go outside&quot;, class: &quot;pink&quot;);
+}
+</code></pre>
+<p><img src="syntax/define_block/example1.svg" alt="Example 1" /></p>
+<p>This flowchart has lots of repetition going on, which means:</p>
+<ul>
+<li>It's harder to read</li>
+<li>If you want to change something, you need to change it in multiple places</li>
+<li>Long lines make it hard to figure out how many columns there are in a row</li>
+</ul>
+<p>We can rewrite the example like so:</p>
+<pre><code class="language-js">grid {
+    block(&quot;Think about going outside&quot;, connect: s:n@s);
+    condition(&quot;Is it raining?&quot;),                           block#stay(&quot;Stay inside&quot;);
+    condition(&quot;Is it cold?&quot;);
+    condition(&quot;Is it night?&quot;);
+    block(&quot;Go outside&quot;);
+}
+
+define {
+    block(class: &quot;pink&quot;);
+    condition(shape: diamond, class: &quot;yellow&quot;, connect: {
+        s:n@s(&quot;No&quot;);
+        e:w#stay(&quot;Yes&quot;);
+    });
+}
+</code></pre>
+<p><em>Definitions</em> are a mechanism for reusing common attributes. They belong in the optional <code>define</code> block and are separated by semicolons. They are specified in the same way as nodes in <code>grid</code>, with one exception being that labels can't be attached to identifiers. Attributes specified for an identifier in <code>define</code> will apply to all nodes with the same identifier in <code>grid</code>.</p>
+<p>Apart from using the <code>define</code> block to put shared attributes in one place, a valid use-case could also be putting a node's long list of attributes in <code>define</code> so as to reduce clutter in <code>grid</code>, making it more readable.</p>
+<p>It can also be convenient to put the <code>connect</code> attribute in <code>define</code> if there are multiple connections so that they can be spread across multiple lines for improved readability like in the example above. The same could be done in <code>grid</code>, though it's generally not a good idea since it makes it harder to tell how many rows the grid has.</p>
+<h3 id="overwriting"><a class="header" href="#overwriting">Overwriting</a></h3>
+<p>If a node has the same attribute defined in <code>grid</code> and in <code>define</code>, the value in <code>grid</code> will overwrite the one in <code>define</code>:</p>
+<pre><code class="language-js">grid {
+    src(&quot;Source&quot;, connect: e:w@e),              dest;
+    dest(&quot;Custom destination&quot;, shape: rect);
+}
+
+define {
+    src(shape: square, connect: {s:n@s, e:w@e});
+    dest(&quot;Destination&quot;, shape: circle);
+}
+</code></pre>
+<p><img src="syntax/define_block/example3.svg" alt="Example 3" /></p>
+<p>As an example of where this can come in handy, say we wanted all <code>block</code> nodes connect to the node below them except for the last one. This can be achieved by overriding its <code>connect</code> to an empty list:</p>
+<pre><code class="language-js">grid {
+    block(&quot;Step one&quot;);
+    block(&quot;Step two&quot;);
+    block(&quot;Step three&quot;);
+    block(&quot;Step four&quot;, connect: {});
+}
+
+define {
+    block(shape: ellipse, class: &quot;pink&quot;, connect: s:n@s);
+}
+</code></pre>
+<p><img src="syntax/define_block/example4.svg" alt="Example 4" /></p>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="list-of-attributes"><a class="header" href="#list-of-attributes">List of attributes</a></h2>
+<h3 id="node-attributes"><a class="header" href="#node-attributes">Node attributes</a></h3>
+<p>These are the attributes that can be defined on a node:</p>
+<ul>
+<li><code>text</code> — The text to render inside the node.</li>
+<li><code>class</code> — One or more CSS classes that will get appended to this node's SVG representation; read more <a href="syntax/../styling_flowchart.html">here</a>.</li>
+<li><code>shape</code> — Determines the node's shape. Can be one of the following:
+<ul>
+<li><code>rect</code> — Rectangle (default).</li>
+<li><code>square</code> — Square.</li>
+<li><code>ellipse</code> — Ellipse.</li>
+<li><code>circle</code> — Circle.</li>
+<li><code>diamond</code> — Diamond.</li>
+<li><code>angled_square</code> — Square at a 45° angle.</li>
+</ul>
+</li>
+<li><code>connect</code> — Defines one or more connections this node has to other nodes. Consists of two parts:
+<ul>
+<li>Connection sides. Has the format <code>x:y</code> meaning &quot;connect the <strong>x</strong> side of the source node to the <strong>y</strong> side of the destination node. <code>x</code> and <code>y</code> can be one of the following:
+<ul>
+<li><code>n</code> — North.</li>
+<li><code>s</code> — South.</li>
+<li><code>w</code> — West.</li>
+<li><code>e</code> — East.</li>
+</ul>
+</li>
+<li>Destination. Can be one of the following:
+<ul>
+<li><code>#dest</code> — Connect to the node with the label <code>dest</code>.</li>
+<li><code>@n</code> — Connect to the node directly <strong>north</strong> of source node. (similar for other cardinal directions).</li>
+<li><code>@</code> — Connect source node to itself.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="connection-attributes-1"><a class="header" href="#connection-attributes-1">Connection attributes</a></h3>
+<p>These are the attributes that can be defined on a connection:</p>
+<ul>
+<li><code>text</code> — The text that appears next to the connection's beginning.</li>
+<li><code>class</code> — One or more CSS classes that will get appended to this connection's SVG representation; read more <a href="syntax/../styling_flowchart.html">here</a>.</li>
+<li><code>arrowheads</code> — Determines which arrowheads the connection will have. Can be one of the following:
+<ul>
+<li><code>none</code> — No arrowheads.</li>
+<li><code>start</code> — Arrowhead on the source node only.</li>
+<li><code>end</code> — Arrowhead on the destination node only (default).</li>
+<li><code>both</code> — Arrowheads on both the source and destination nodes.</li>
+</ul>
+</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="cli"><a class="header" href="#cli">CLI</a></h2>
+<p>Usage:</p>
+<pre><code>$ flou [FLAGS] [OPTIONS] &lt;input&gt;
+</code></pre>
+<p>Flags:</p>
+<ul>
+<li><code>-h, --help</code> — Prints help information.</li>
+<li><code>-V, --version</code> — Prints version information.</li>
+<li><code>--no-default-css</code> — If present, the default CSS file won't be embedded.</li>
+</ul>
+<p>Options:</p>
+<ul>
+<li><code>--css &lt;css&gt;...</code> — Injects one or more CSS files into the generated SVG. Read more <a href="styling_flowchart.html">here</a>.</li>
+<li><code>-g, --gap &lt;size&gt;</code> — Specifies the size of the grid gaps. Defaults to (50, 50).</li>
+<li><code>-n, --node &lt;size&gt;</code> — Specifies the size of nodes in the grid. Defaults to (200, 100).</li>
+<li><code>-o, --output &lt;file&gt;</code> — Specifies the output SVG file. Outputs to stdout if no output file is provided.</li>
+</ul>
+<p>Args:</p>
+<ul>
+<li><code>&lt;input&gt;</code> — The input file, written in Flou DSL. Use <code>-</code> to read from standard input instead.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="styling-your-flowchart"><a class="header" href="#styling-your-flowchart">Styling your flowchart</a></h2>
+<h3 id="svg-output-structure"><a class="header" href="#svg-output-structure">SVG output structure</a></h3>
+<p>Here's a simple flowchart:</p>
+<pre><code class="language-js">grid {
+    src(&quot;Source&quot;);
+    dest(&quot;Destination&quot;, class: &quot;my-destination&quot;);
+}
+
+define {
+    src(connect: {
+        s:n@s(class: &quot;my-south-connection&quot;, arrowheads: both);
+        w:w@s(class: &quot;my-west-connection&quot;);
+    });
+}
+</code></pre>
+<p><img src="styling_flowchart/example1.svg" alt="Example 1" /></p>
+<p>Let's look at the generated SVG:</p>
+<pre><code class="language-xml">&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;300&quot; height=&quot;350&quot;&gt;
+  &lt;style&gt;
+    &lt;!-- Some default CSS here --&gt;
+  &lt;/style&gt;
+  &lt;rect class=&quot;background&quot; x=&quot;0&quot; y=&quot;0&quot; width=&quot;300&quot; height=&quot;350&quot; /&gt;
+
+  &lt;g class=&quot;nodes&quot;&gt;
+    &lt;g class=&quot;node-wrapper&quot;&gt;
+      &lt;rect class=&quot;rect node&quot; x=&quot;50&quot; y=&quot;50&quot; width=&quot;200&quot; height=&quot;100&quot; /&gt;
+      &lt;text x=&quot;150&quot; y=&quot;100&quot;&gt;Source&lt;/text&gt;
+    &lt;/g&gt;
+
+    &lt;g class=&quot;node-wrapper my-destination&quot;&gt;
+      &lt;rect class=&quot;rect node&quot; x=&quot;50&quot; y=&quot;200&quot; width=&quot;200&quot; height=&quot;100&quot; /&gt;
+      &lt;text x=&quot;150&quot; y=&quot;250&quot;&gt;Destination&lt;/text&gt;
+    &lt;/g&gt;
+  &lt;/g&gt;
+
+  &lt;g class=&quot;connections&quot;&gt;
+    &lt;g class=&quot;connection my-south-connection&quot;&gt;
+      &lt;path class=&quot;path&quot; d=&quot;M 150 150 L 150 200&quot; /&gt;
+      &lt;path class=&quot;arrowhead start&quot; d=&quot;M 150 150 L 145 160 L 150 155 L 155 160 L 150 150&quot; /&gt;
+      &lt;path class=&quot;arrowhead end&quot; d=&quot;M 150 200 L 155 190 L 150 195 L 145 190 L 150 200&quot; /&gt;
+    &lt;/g&gt;
+
+    &lt;g class=&quot;connection my-west-connection&quot;&gt;
+      &lt;path class=&quot;path&quot; d=&quot;M 50 100 L 25 100 L 25 250 L 50 250&quot; /&gt;
+      &lt;path class=&quot;arrowhead end&quot; d=&quot;M 50 250 L 40 245 L 45 250 L 40 255 L 50 250&quot; /&gt;
+    &lt;/g&gt;
+  &lt;/g&gt;
+&lt;/svg&gt;
+</code></pre>
+<p>Various parts of the flowchart are tagged with CSS classes. By default, the flowchart is rendered with some default CSS that targets these classes (that's the <code>&lt;style&gt;</code> element above). The default CSS can be omitted by using the <code>--no-default-css</code> CLI flag. You can see the exact contents of the default CSS file <a href="">here</a>.</p>
+<p>The <code>&lt;rect&gt;</code> with the <code>background</code> class is simply the flowchart's background layer. Other than that, the flowchart consists of two groups: <code>nodes</code> and <code>connections</code>.</p>
+<h4 id="node-structure"><a class="header" href="#node-structure">Node structure</a></h4>
+<p>Each node has the following general shape:</p>
+<pre><code class="language-xml">&lt;g class=&quot;node-wrapper my-destination&quot;&gt;
+  &lt;rect class=&quot;rect node&quot; x=&quot;50&quot; y=&quot;200&quot; width=&quot;200&quot; height=&quot;100&quot; /&gt;
+  &lt;text x=&quot;150&quot; y=&quot;250&quot;&gt;Destination&lt;/text&gt;
+&lt;/g&gt;
+</code></pre>
+<p>The element with the <code>node-wrapper</code> class is the node's root. The element with the <code>node</code> class is the shape of the node. This element will also automatically get its shape attached as another CSS class (in this case, <code>rect</code>). Finally, the node's root also contains a <code>&lt;text&gt;</code> element which holds the node's text. Putting a <code>class</code> node attribute like the one on the <code>dest</code> node will attach the given CSS class to the node's root.</p>
+<h4 id="connection-structure"><a class="header" href="#connection-structure">Connection structure</a></h4>
+<p>Each connection has the following general shape:</p>
+<pre><code class="language-xml">&lt;g class=&quot;connection my-south-connection&quot;&gt;
+  &lt;path class=&quot;path&quot; d=&quot;M 150 150 L 150 200&quot; /&gt;
+  &lt;path class=&quot;arrowhead start&quot; d=&quot;M 150 150 L 145 160 L 150 155 L 155 160 L 150 150&quot; /&gt;
+  &lt;path class=&quot;arrowhead end&quot; d=&quot;M 150 200 L 155 190 L 150 195 L 145 190 L 150 200&quot; /&gt;
+&lt;/g&gt;
+</code></pre>
+<p>The structure and CSS classes for connections are similar to those of nodes. <code>connection</code> is the connection's root element and <code>path</code> is the shape itself. If the connection has any arrowheads, their elements will have the <code>arrowhead</code> class along with their position as another CSS class. Putting a <code>class</code> connection attribute will attach the class to the connection's root.</p>
+<h3 id="embedding-css"><a class="header" href="#embedding-css">Embedding CSS</a></h3>
+<p>Let's write a custom CSS file called <code>index.css</code> that will modify the default CSS as well as target the custom CSS classes we attached to our nodes and connections:</p>
+<pre><code class="language-css">/* Override default CSS */
+.background {
+    fill: #cec;
+}
+
+/* Custom classes */
+.my-destination .node {
+    fill: lightpink;
+}
+
+.my-destination text {
+    fill: #333;
+}
+
+.my-south-connection .path,
+.my-south-connection .arrowhead {
+    fill: blue;
+    stroke: blue;
+}
+</code></pre>
+<p>We can use the <code>--css</code> CLI option to embed one or more CSS files into the resulting SVG:</p>
+<pre><code>$ flou input.svg -o output.svg --css index.css
+</code></pre>
+<p>This is the result:</p>
+<p><img src="styling_flowchart/example2.svg" alt="Example 2" /></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+            </nav>
+
+        </div>
+
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        <script type="text/javascript">
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+    </body>
+</html>
