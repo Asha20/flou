@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="550" height="500">
+  <style>.background {
+  fill: #eee;
+}
+
+.node {
+  fill: #fff;
+  stroke: #1e1e1e;
+}
+
+text,
+tspan {
+  fill: #1e1e1e;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.connection-text {
+  dominant-baseline: auto;
+}
+
+.path {
+  fill: none;
+  stroke: #1e1e1e;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.connection .arrowhead {
+  stroke: #1e1e1e;
+  fill: #1e1e1e;
+}</style>
+  <rect class="background" x="0" y="0" width="550" height="500" />
+  <g class="nodes">
+    <g class="node-wrapper">
+      <rect class="rectangle node" x="50" y="50" width="200" height="100" />
+      <text x="150" y="100">One</text>
+    </g>
+    <g class="node-wrapper">
+      <rect class="rectangle node" x="300" y="50" width="200" height="100" />
+      <text x="400" y="100">Two</text>
+    </g>
+    <g class="node-wrapper">
+      <rect class="rectangle node" x="50" y="200" width="200" height="100" />
+      <text x="150" y="250">Three</text>
+    </g>
+    <g class="node-wrapper">
+      <rect class="rectangle node" x="300" y="350" width="200" height="100" />
+      <text x="400" y="400">Four</text>
+    </g>
+  </g>
+  <g class="connections" />
+</svg>

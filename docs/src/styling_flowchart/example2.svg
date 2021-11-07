@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="350">
+  <style>.background {
+  fill: #eee;
+}
+
+.node {
+  fill: #fff;
+  stroke: #1e1e1e;
+}
+
+text,
+tspan {
+  fill: #1e1e1e;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.connection-text {
+  dominant-baseline: auto;
+}
+
+.path {
+  fill: none;
+  stroke: #1e1e1e;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.connection .arrowhead {
+  stroke: #1e1e1e;
+  fill: #1e1e1e;
+}</style>
+  <style>/* Override default CSS */
+.background {
+    fill: #cec;
+}
+
+/* Custom classes */
+.my-destination .node {
+    fill: lightpink;
+}
+
+.my-destination text {
+    fill: #333;
+}
+
+.my-south-connection .path,
+.my-south-connection .arrowhead {
+    fill: blue;
+    stroke: blue;
+}</style>
+  <rect class="background" x="0" y="0" width="300" height="350" />
+  <g class="nodes">
+    <g class="node-wrapper">
+      <rect class="rect node" x="50" y="50" width="200" height="100" />
+      <text x="150" y="100">Source</text>
+    </g>
+    <g class="node-wrapper my-destination">
+      <rect class="rect node" x="50" y="200" width="200" height="100" />
+      <text x="150" y="250">Destination</text>
+    </g>
+  </g>
+  <g class="connections">
+    <g class="connection my-south-connection">
+      <path class="path" d="M 150 150 L 150 200" />
+      <path class="arrowhead start" d="M 150 150 L 145 160 L 150 155 L 155 160 L 150 150" />
+      <path class="arrowhead end" d="M 150 200 L 155 190 L 150 195 L 145 190 L 150 200" />
+    </g>
+    <g class="connection my-west-connection">
+      <path class="path" d="M 50 100 L 25 100 L 25 250 L 50 250" />
+      <path class="arrowhead end" d="M 50 250 L 40 245 L 45 250 L 40 255 L 50 250" />
+    </g>
+  </g>
+</svg>

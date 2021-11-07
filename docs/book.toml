@@ -1,0 +1,6 @@
+[book]
+authors = ["Vukašin Stepanović"]
+language = "en"
+multilingual = false
+src = "src"
+title = "flou Documentation"
