@@ -28,6 +28,31 @@ fn escape(input: &str) -> Cow<str> {
     }
 }
 
+// This is a hacky workaround for lifetime issues in SVGElement::text().
+// There's probably a better way of resolving them without duplicating code.
+fn escape_cow(input: Cow<str>) -> Cow<str> {
+    fn should_escape(c: char) -> bool {
+        c == '<' || c == '>' || c == '&' || c == '"' || c == '\''
+    }
+
+    if input.contains(should_escape) {
+        let mut output = String::with_capacity(input.len());
+        for c in input.chars() {
+            match c {
+                '\'' => output.push_str("&apos;"),
+                '"' => output.push_str("&quot;"),
+                '<' => output.push_str("&lt;"),
+                '>' => output.push_str("&gt;"),
+                '&' => output.push_str("&amp;"),
+                _ => output.push(c),
+            }
+        }
+        Cow::Owned(output)
+    } else {
+        input
+    }
+}
+
 fn indent(depth: usize) -> String {
     const SIZE: usize = 2;
     " ".repeat(SIZE * depth)
@@ -129,8 +154,9 @@ impl<'a> SVGElement<'a> {
         }
     }
 
-    pub(crate) fn text(mut self, text: &'a str) -> Self {
-        let text = escape(text);
+    pub(crate) fn text<I: Into<Cow<'a, str>>>(mut self, text: I) -> Self {
+        let text = text.into();
+        let text = escape_cow(text);
         self.children.push(Node::Text(text));
         self
     }

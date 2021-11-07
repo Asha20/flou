@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, convert::TryFrom, fmt::Display};
+use std::{borrow::Cow, cmp::Ordering, convert::TryFrom, fmt::Display};
 
 use crate::{
     parse::ast::{ArrowheadType, Direction},
@@ -107,14 +107,29 @@ pub struct SvgRenderer {
 }
 
 impl Renderer for SvgRenderer {
-    fn render<'i>(&self, flou: &'i Flou<'i>) -> Box<dyn Display + 'i> {
-        let style = SVGElement::new("style").text(include_str!("../css/default.css"));
+    fn render<'i>(
+        &self,
+        flou: &'i Flou<'i>,
+        default_css: bool,
+        css: Vec<String>,
+    ) -> Box<dyn Display + 'i> {
+        let mut styles: Vec<Cow<str>> = Vec::new();
+        if default_css {
+            styles.push(include_str!("../css/default.css").into());
+        }
+
+        styles.extend(css.into_iter().map(Into::into));
+
+        let styles = styles
+            .into_iter()
+            .map(|css| SVGElement::new("style").text(css));
+
         let size = self.calculate_svg_size(flou.grid.size);
 
         let svg = SVGElement::new("svg")
             .attr("xmlns", "http://www.w3.org/2000/svg")
             .size(size)
-            .child(style);
+            .children(styles);
 
         let nodes = SVGElement::new("g")
             .class("nodes")

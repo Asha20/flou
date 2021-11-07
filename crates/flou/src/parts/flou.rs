@@ -68,7 +68,12 @@ impl<'i> TryFrom<&'i str> for Flou<'i> {
 }
 
 pub trait Renderer {
-    fn render<'i>(&self, flou: &'i Flou<'i>) -> Box<dyn Display + 'i>;
+    fn render<'i>(
+        &self,
+        flou: &'i Flou<'i>,
+        default_css: bool,
+        css: Vec<String>,
+    ) -> Box<dyn Display + 'i>;
 }
 
 impl<'i> TryFrom<Document<'i>> for Flou<'i> {

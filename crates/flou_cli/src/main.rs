@@ -9,6 +9,13 @@ fn main() {
             Error::InputRead(e) => eprintln!("Could not read input: {}", e),
             Error::OutputOpen(e) => eprintln!("Could not open output file: {}", e),
             Error::OutputWrite(e) => eprintln!("Could not write output: {}", e),
+            Error::CssRead(filename, e) => {
+                eprintln!(
+                    "Could not read CSS file \"{}\": {}",
+                    filename.to_string_lossy(),
+                    e
+                )
+            }
             Error::Parse(e) => eprintln!("{}", e),
         };
 

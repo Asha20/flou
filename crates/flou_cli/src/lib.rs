@@ -16,16 +16,24 @@ pub struct Opt {
     input: PathBuf,
 
     /// Output file; outputs to stdout if omitted.
-    #[structopt(parse(from_os_str))]
+    #[structopt(short = "o", long = "output", parse(from_os_str))]
     output: Option<PathBuf>,
 
     /// Specifies the width and height of nodes in the grid (format: x,y).
     #[structopt(short = "n", long = "node", parse(try_from_str = parse_size))]
-    node_size: Option<(i32, i32)>,
+    node: Option<(i32, i32)>,
 
     /// Specifies the width and height of the grid gaps (format: x,y).
     #[structopt(short = "g", long = "gap", parse(try_from_str = parse_size))]
-    grid_gap_size: Option<(i32, i32)>,
+    gap: Option<(i32, i32)>,
+
+    /// Injects the given CSS files into the generated SVG.
+    #[structopt(long = "css", parse(from_os_str))]
+    css: Option<Vec<PathBuf>>,
+
+    /// Don't inject the default CSS file.
+    #[structopt(long = "no-default-css")]
+    no_default_css: bool,
 }
 
 fn parse_size(src: &str) -> Result<(i32, i32), &'static str> {
@@ -53,6 +61,7 @@ pub enum Error {
     InputRead(io::Error),
     OutputOpen(io::Error),
     OutputWrite(io::Error),
+    CssRead(PathBuf, io::Error),
     Parse(String),
 }
 
@@ -69,6 +78,7 @@ pub fn run(opt: Opt) -> Result<(), Error> {
         fs::OpenOptions::new()
             .create(true)
             .write(true)
+            .truncate(true)
             .open(filename)
             .map(|x| -> Box<dyn Write> { Box::new(BufWriter::new(x)) })
             .map_err(Error::OutputOpen)?
@@ -81,10 +91,17 @@ pub fn run(opt: Opt) -> Result<(), Error> {
         .read_to_string(&mut input)
         .map_err(Error::InputRead)?;
 
+    let css = opt
+        .css
+        .unwrap_or_default()
+        .into_iter()
+        .map(|filename| fs::read_to_string(&filename).map_err(|e| Error::CssRead(filename, e)))
+        .collect::<Result<Vec<_>, _>>()?;
+
     let flou = Flou::try_from(input.as_str()).map_err(|x| Error::Parse(flou_error_to_string(x)))?;
 
-    let renderer = SvgRenderer::new(opt.node_size, opt.grid_gap_size);
-    let output = renderer.render(&flou);
+    let renderer = SvgRenderer::new(opt.node, opt.gap);
+    let output = renderer.render(&flou, !opt.no_default_css, css);
 
     write!(writer, "{}", output).map_err(Error::OutputWrite)?;
 
