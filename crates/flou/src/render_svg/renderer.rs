@@ -136,6 +136,18 @@ impl Renderer for SvgRenderer {
 }
 
 impl SvgRenderer {
+    pub fn new<I: Into<PixelPos>>(node: Option<I>, grid_gap: Option<I>) -> Self {
+        let mut res = Self::default();
+        if let Some(node) = node {
+            res.node = node.into();
+        }
+        if let Some(grid_gap) = grid_gap {
+            res.grid_gap = grid_gap.into();
+        }
+
+        res
+    }
+
     fn calculate_node_origin(&self, pos: IndexPos) -> PixelPos {
         let node_offset: PixelPos = pos.into();
         let num_grid_gaps = (node_offset + 1) * PaddedPos::PADDING as i32;

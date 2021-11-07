@@ -18,6 +18,34 @@ pub struct Opt {
     /// Output file; outputs to stdout if omitted.
     #[structopt(parse(from_os_str))]
     output: Option<PathBuf>,
+
+    /// Specifies the width and height of nodes in the grid (format: x,y).
+    #[structopt(short = "n", long = "node", parse(try_from_str = parse_size))]
+    node_size: Option<(i32, i32)>,
+
+    /// Specifies the width and height of the grid gaps (format: x,y).
+    #[structopt(short = "g", long = "gap", parse(try_from_str = parse_size))]
+    grid_gap_size: Option<(i32, i32)>,
+}
+
+fn parse_size(src: &str) -> Result<(i32, i32), &'static str> {
+    let tokens = src.split(',').collect::<Vec<_>>();
+    if tokens.len() != 2 {
+        return Err("Size should have format: \"x,y\"");
+    }
+
+    let x = tokens[0]
+        .parse::<i32>()
+        .map_err(|_| "Could not parse X coordinate")?;
+    let y = tokens[1]
+        .parse::<i32>()
+        .map_err(|_| "Could not parse Y coordinate")?;
+
+    if x < 0 || y < 0 {
+        return Err("X and Y cannot be negative.");
+    }
+
+    Ok((x, y))
 }
 
 pub enum Error {
@@ -55,7 +83,7 @@ pub fn run(opt: Opt) -> Result<(), Error> {
 
     let flou = Flou::try_from(input.as_str()).map_err(|x| Error::Parse(flou_error_to_string(x)))?;
 
-    let renderer = SvgRenderer::default();
+    let renderer = SvgRenderer::new(opt.node_size, opt.grid_gap_size);
     let output = renderer.render(&flou);
 
     write!(writer, "{}", output).map_err(Error::OutputWrite)?;

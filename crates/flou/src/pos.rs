@@ -166,3 +166,9 @@ impl<T: Num + Signed, U> From<Direction> for Position2D<T, U> {
         }
     }
 }
+
+impl<T: Num, U> From<(T, T)> for Position2D<T, U> {
+    fn from((x, y): (T, T)) -> Self {
+        Self::new(x, y)
+    }
+}
