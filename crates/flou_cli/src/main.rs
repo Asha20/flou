@@ -1,31 +1,17 @@
-use std::convert::TryFrom;
-
-use flou::{Flou, FlouError, Renderer, SvgRenderer};
+use flou_cli::{run, Error, Opt};
+use structopt::StructOpt;
 
 fn main() {
-    let input = std::env::args().nth(1).unwrap_or_else(|| {
-        eprintln!("error: missing input file");
-        std::process::exit(1);
-    });
-
-    let input = std::fs::read_to_string(input).unwrap_or_else(|e| {
-        eprintln!("error reading file: {}", e);
-        std::process::exit(1);
-    });
-
-    let flou = Flou::try_from(input.as_str()).unwrap_or_else(|e| {
-        eprintln!("error parsing flou:");
+    let opt = Opt::from_args();
+    run(opt).unwrap_or_else(|e| {
         match e {
-            FlouError::Parse(e) => {
-                eprintln!("parse error:");
-                eprintln!("{}", e);
-            }
-            FlouError::Logic(e) => {
-                eprintln!("logic error: {:?}", e);
-            }
+            Error::InputOpen(e) => eprintln!("Could not open input file: {}", e),
+            Error::InputRead(e) => eprintln!("Could not read input: {}", e),
+            Error::OutputOpen(e) => eprintln!("Could not open output file: {}", e),
+            Error::OutputWrite(e) => eprintln!("Could not write output: {}", e),
+            Error::Parse(e) => eprintln!("{}", e),
         };
+
         std::process::exit(1);
     });
-
-    println!("{}", SvgRenderer::default().render(&flou))
 }

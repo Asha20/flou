@@ -6,3 +6,4 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 flou = { path = "../flou" }
+structopt = "0.3.25"

@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::fmt;
+
 use nom::{
     branch::{alt, permutation},
     bytes::complete::take_while,
@@ -43,6 +45,12 @@ impl<'i> Identifier<'i> {
     }
 }
 
+impl fmt::Display for Identifier<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum NodeShape {
     Rectangle,
@@ -82,6 +90,19 @@ impl Direction {
             value(Self::West, tag("w")),
             value(Self::East, tag("e")),
         ))(i)
+    }
+}
+
+impl fmt::Display for Direction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Direction::North => "North",
+            Direction::South => "South",
+            Direction::West => "West",
+            Direction::East => "East",
+        };
+
+        f.write_str(s)
     }
 }
 

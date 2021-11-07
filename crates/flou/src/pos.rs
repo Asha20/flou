@@ -26,6 +26,12 @@ pub(crate) fn pos<T: Num, U>(x: T, y: T) -> Position2D<T, U> {
     Position2D::new(x, y)
 }
 
+impl<T: Num + fmt::Display, U> fmt::Display for Position2D<T, U> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
+    }
+}
+
 impl<T: Num + Copy, U> Copy for Position2D<T, U> {}
 
 impl<T: Num + Clone, U> Clone for Position2D<T, U> {

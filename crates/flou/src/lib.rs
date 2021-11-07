@@ -8,5 +8,5 @@ mod pos;
 mod render_svg;
 mod svg;
 
-pub use parts::{Flou, FlouError, Renderer};
+pub use parts::{Flou, FlouError, LogicError, Renderer, ResolutionError};
 pub use render_svg::SvgRenderer;
