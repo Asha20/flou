@@ -17,7 +17,7 @@ impl NodeShape {
     pub(crate) fn render(&self, viewport: Viewport) -> SVGElement<'static> {
         match &self {
             Self::Rectangle => SVGElement::new("rect")
-                .class("rectangle")
+                .class("rect")
                 .pos(viewport.origin)
                 .size(viewport.size),
 

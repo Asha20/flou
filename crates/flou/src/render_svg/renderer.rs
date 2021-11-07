@@ -260,11 +260,13 @@ impl SvgRenderer {
         let arrowheads = connection.attrs.arrowheads.unwrap_or_default();
 
         if arrowheads == ArrowheadType::Start || arrowheads == ArrowheadType::Both {
-            result = result.child(create_arrowhead(link_points.first().cloned().unwrap()));
+            result = result
+                .child(create_arrowhead(link_points.first().cloned().unwrap()).class("start"));
         }
 
         if arrowheads == ArrowheadType::End || arrowheads == ArrowheadType::Both {
-            result = result.child(create_arrowhead(link_points.last().cloned().unwrap()));
+            result =
+                result.child(create_arrowhead(link_points.last().cloned().unwrap()).class("end"));
         }
 
         result
