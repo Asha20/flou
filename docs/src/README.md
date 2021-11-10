@@ -2,7 +2,7 @@
 
 ### What is Flou?
 
-Flou is a [domain-specific language](https://en.wikipedia.org/wiki/Domain-specific_language) for describing flowcharts. It is also a CLI of the same name that renders the previously mentioned flowchart description into an SVG file.
+Flou is a [domain-specific language (DSL)](https://en.wikipedia.org/wiki/Domain-specific_language) for describing flowcharts. It is also a CLI of the same name that renders the previously mentioned flowchart description into an SVG file.
 
 Flou's goal is to offer a textual representation of flowcharts.
 

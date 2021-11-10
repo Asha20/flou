@@ -8,7 +8,7 @@ Flags:
 
 - `-h, --help` — Prints help information.
 - `-V, --version` — Prints version information.
-- `--no-default-css` — If present, the default CSS file won't be embedded.
+- `--no-default-css` — If present, the default CSS file won't be embedded. Read more [here](styling_flowchart.md).
 
 Options:
 

@@ -22,7 +22,7 @@ We've attached `#dest` to the destination node's identifier. This is called a *l
 
 ### Relative connections
 
-Having to keep track of various labels can get messy fast. We could simplify the previous example like so:
+Keeping track of multiple labels is tedious and error-prone. We could simplify the previous example like so:
 
 ```js
 grid {
@@ -36,7 +36,7 @@ Instead of a label on the destination node we used `@s` as the connection destin
 
 ### Self connection
 
-A node can be connected to itself like so:
+A node can be connected to itself by omitting the direction and using just `@`, like so:
 
 ```js
 grid {

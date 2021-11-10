@@ -40,7 +40,7 @@ define {
 }
 ```
 
-*Definitions* are a mechanism for reusing common attributes. They belong in the optional `define` block and are separated by semicolons. They are specified in the same way as nodes in `grid`, with one exception being that labels can't be attached to identifiers. Attributes specified for an identifier in `define` will apply to all nodes with the same identifier in `grid`.
+*Definitions* are a mechanism for reusing common attributes. They belong in the optional `define` block and are separated by semicolons. They are specified in the same way as nodes in `grid`, with one exception being that labels can't be attached to identifiers inside `define`. Attributes specified for an identifier in `define` will apply to all nodes with the same identifier in `grid`.
 
 Apart from using the `define` block to put shared attributes in one place, a valid use-case could also be putting a node's long list of attributes in `define` so as to reduce clutter in `grid`, making it more readable.
 
