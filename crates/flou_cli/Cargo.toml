@@ -1,9 +1,20 @@
 [package]
 name = "flou_cli"
+description = "CLI for Flou, a flowchart description language."
+homepage = "https://asha20.github.io/flou"
+repository = "https://github.com/Asha20/flou"
+readme = "../../README.md"
+license = "MIT OR Apache-2.0"
+keywords = ["flowchart"]
+categories = ["command-line-utilities"]
+
 version = "0.1.0"
 edition = "2018"
-license = "MIT OR Apache-2.0"
 
 [dependencies]
-flou = { path = "../flou" }
+flou = { path = "../flou", version = "0.1.0" }
 structopt = "0.3.25"
+
+[[bin]]
+name = "flou"
+path = "src/main.rs"

@@ -6,7 +6,7 @@ Flou's goal is to offer a textual representation of flowcharts.
 
 ## Documentation
 
-Flou's documentation can be found [here]().
+Flou's documentation can be found [here](https://asha20.github.io/flou).
 
 ## Reasons to use Flou?
 
@@ -19,7 +19,3 @@ Flou's documentation can be found [here]().
 
 - It's still in beta. This means some features might be unpolished.
 - Connections that happen to have overlapping segments can bring visual ambiguity since Flou CLI won't render them side by side and will overlap them instead. However, this issue can be offset by the user since they can pick and choose the connection sides.
-
-## License
-
-The two Rust crates in this repository, `flou` and `flou_cli`, are both dual licensed under either the MIT or the Apache 2.0 license. You may find their licenses under `crates/flou` and `crates/flou_cli`, respectively.

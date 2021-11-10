@@ -1,8 +1,14 @@
 [package]
 name = "flou"
+description = "Parser for Flou, a flowchart description language."
+homepage = "https://asha20.github.io/flou"
+repository = "https://github.com/Asha20/flou"
+readme = "../../README.md"
+license = "MIT OR Apache-2.0"
+keywords = ["flowchart"]
+
 version = "0.1.0"
 edition = "2018"
-license = "MIT OR Apache-2.0"
 
 [dependencies]
 nom = "7.0.0"
