@@ -137,7 +137,7 @@
                     <main>
                         <h2 id="introduction"><a class="header" href="#introduction">Introduction</a></h2>
 <h3 id="what-is-flou"><a class="header" href="#what-is-flou">What is Flou?</a></h3>
-<p>Flou is a <a href="https://en.wikipedia.org/wiki/Domain-specific_language">domain-specific language</a> for describing flowcharts. It is also a CLI of the same name that renders the previously mentioned flowchart description into an SVG file.</p>
+<p>Flou is a <a href="https://en.wikipedia.org/wiki/Domain-specific_language">domain-specific language (DSL)</a> for describing flowcharts. It is also a CLI of the same name that renders the previously mentioned flowchart description into an SVG file.</p>
 <p>Flou's goal is to offer a textual representation of flowcharts.</p>
 <h3 id="reasons-to-use-flou"><a class="header" href="#reasons-to-use-flou">Reasons to use Flou?</a></h3>
 <ul>
@@ -161,7 +161,7 @@
 <ul>
 <li>How to define flowcharts using <code>grid</code>.</li>
 <li>How to reuse common parts using <code>define</code>.</li>
-<li>All the various attributes nodes and connections can have.</li>
+<li>All about the basic building blocks of flowcharts: nodes and connections.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="hello-world"><a class="header" href="#hello-world">Hello World!</a></h2>
 <p>Let's create our first flowchart:</p>
@@ -212,7 +212,7 @@
 <li><code>#dest</code> is the destination. Here it means that the destination node is the one with the label <code>dest</code>.</li>
 </ul>
 <h3 id="relative-connections"><a class="header" href="#relative-connections">Relative connections</a></h3>
-<p>Having to keep track of various labels can get messy fast. We could simplify the previous example like so:</p>
+<p>Keeping track of multiple labels is tedious and error-prone. We could simplify the previous example like so:</p>
 <pre><code class="language-js">grid {
     block(&quot;Source&quot;, connect: s:n@s);
     block(&quot;Destination&quot;);
@@ -220,7 +220,7 @@
 </code></pre>
 <p>Instead of a label on the destination node we used <code>@s</code> as the connection destination, meaning &quot;the node directly <strong>south</strong> of me&quot;. Relative connections are easier to understand and don't require labels, but can't represent all possible connections like absolute ones can.</p>
 <h3 id="self-connection"><a class="header" href="#self-connection">Self connection</a></h3>
-<p>A node can be connected to itself like so:</p>
+<p>A node can be connected to itself by omitting the direction and using just <code>@</code>, like so:</p>
 <pre><code class="language-js">grid {
     block(&quot;Source and destination&quot;, connect: s:n@);
 }
@@ -275,7 +275,7 @@ define {
     });
 }
 </code></pre>
-<p><em>Definitions</em> are a mechanism for reusing common attributes. They belong in the optional <code>define</code> block and are separated by semicolons. They are specified in the same way as nodes in <code>grid</code>, with one exception being that labels can't be attached to identifiers. Attributes specified for an identifier in <code>define</code> will apply to all nodes with the same identifier in <code>grid</code>.</p>
+<p><em>Definitions</em> are a mechanism for reusing common attributes. They belong in the optional <code>define</code> block and are separated by semicolons. They are specified in the same way as nodes in <code>grid</code>, with one exception being that labels can't be attached to identifiers inside <code>define</code>. Attributes specified for an identifier in <code>define</code> will apply to all nodes with the same identifier in <code>grid</code>.</p>
 <p>Apart from using the <code>define</code> block to put shared attributes in one place, a valid use-case could also be putting a node's long list of attributes in <code>define</code> so as to reduce clutter in <code>grid</code>, making it more readable.</p>
 <p>It can also be convenient to put the <code>connect</code> attribute in <code>define</code> if there are multiple connections so that they can be spread across multiple lines for improved readability like in the example above. The same could be done in <code>grid</code>, though it's generally not a good idea since it makes it harder to tell how many rows the grid has.</p>
 <h3 id="overwriting"><a class="header" href="#overwriting">Overwriting</a></h3>
@@ -362,7 +362,7 @@ define {
 <ul>
 <li><code>-h, --help</code> — Prints help information.</li>
 <li><code>-V, --version</code> — Prints version information.</li>
-<li><code>--no-default-css</code> — If present, the default CSS file won't be embedded.</li>
+<li><code>--no-default-css</code> — If present, the default CSS file won't be embedded. Read more <a href="styling_flowchart.html">here</a>.</li>
 </ul>
 <p>Options:</p>
 <ul>

@@ -149,7 +149,7 @@
 <li><code>#dest</code> is the destination. Here it means that the destination node is the one with the label <code>dest</code>.</li>
 </ul>
 <h3 id="relative-connections"><a class="header" href="#relative-connections">Relative connections</a></h3>
-<p>Having to keep track of various labels can get messy fast. We could simplify the previous example like so:</p>
+<p>Keeping track of multiple labels is tedious and error-prone. We could simplify the previous example like so:</p>
 <pre><code class="language-js">grid {
     block(&quot;Source&quot;, connect: s:n@s);
     block(&quot;Destination&quot;);
@@ -157,7 +157,7 @@
 </code></pre>
 <p>Instead of a label on the destination node we used <code>@s</code> as the connection destination, meaning &quot;the node directly <strong>south</strong> of me&quot;. Relative connections are easier to understand and don't require labels, but can't represent all possible connections like absolute ones can.</p>
 <h3 id="self-connection"><a class="header" href="#self-connection">Self connection</a></h3>
-<p>A node can be connected to itself like so:</p>
+<p>A node can be connected to itself by omitting the direction and using just <code>@</code>, like so:</p>
 <pre><code class="language-js">grid {
     block(&quot;Source and destination&quot;, connect: s:n@);
 }

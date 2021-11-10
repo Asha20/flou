@@ -168,7 +168,7 @@ define {
     });
 }
 </code></pre>
-<p><em>Definitions</em> are a mechanism for reusing common attributes. They belong in the optional <code>define</code> block and are separated by semicolons. They are specified in the same way as nodes in <code>grid</code>, with one exception being that labels can't be attached to identifiers. Attributes specified for an identifier in <code>define</code> will apply to all nodes with the same identifier in <code>grid</code>.</p>
+<p><em>Definitions</em> are a mechanism for reusing common attributes. They belong in the optional <code>define</code> block and are separated by semicolons. They are specified in the same way as nodes in <code>grid</code>, with one exception being that labels can't be attached to identifiers inside <code>define</code>. Attributes specified for an identifier in <code>define</code> will apply to all nodes with the same identifier in <code>grid</code>.</p>
 <p>Apart from using the <code>define</code> block to put shared attributes in one place, a valid use-case could also be putting a node's long list of attributes in <code>define</code> so as to reduce clutter in <code>grid</code>, making it more readable.</p>
 <p>It can also be convenient to put the <code>connect</code> attribute in <code>define</code> if there are multiple connections so that they can be spread across multiple lines for improved readability like in the example above. The same could be done in <code>grid</code>, though it's generally not a good idea since it makes it harder to tell how many rows the grid has.</p>
 <h3 id="overwriting"><a class="header" href="#overwriting">Overwriting</a></h3>
