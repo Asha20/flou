@@ -56,7 +56,7 @@ Let's look at the generated SVG:
 </svg>
 ```
 
-Various parts of the flowchart are tagged with CSS classes. By default, the flowchart is rendered with some default CSS that targets these classes (that's the `<style>` element above). The default CSS can be omitted by using the `--no-default-css` CLI flag. You can see the exact contents of the default CSS file [here]().
+Various parts of the flowchart are tagged with CSS classes. By default, the flowchart is rendered with some default CSS that targets these classes (that's the `<style>` element above). The default CSS can be omitted by using the `--no-default-css` CLI flag. You can see the exact contents of the default CSS file [here](https://github.com/Asha20/flou/blob/master/crates/flou/src/css/default.css).
 
 The `<rect>` with the `background` class is simply the flowchart's background layer. Other than that, the flowchart consists of two groups: `nodes` and `connections`.
 
