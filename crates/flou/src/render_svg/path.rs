@@ -186,8 +186,7 @@ fn get_best_corner(grid: &Grid, a: PosSide, b: PosSide) -> (PaddedPos, FreeAxisC
         (corners[1], FreeAxisCount::from_pos(corners[1])),
     ];
 
-    corners
-        .sort_unstable_by(|(_, a_lane_count), (_, b_lane_count)| a_lane_count.cmp(&b_lane_count));
+    corners.sort_unstable_by(|(_, a_lane_count), (_, b_lane_count)| a_lane_count.cmp(b_lane_count));
 
     let (smaller, larger) = (corners[0], corners[1]);
 
