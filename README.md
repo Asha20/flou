@@ -30,6 +30,14 @@ define {
 
 Flou's documentation and user guide can be found [here](https://asha20.github.io/flou).
 
+## Installation
+
+You can grab a prebuilt binary for your operating system [here](https://github.com/Asha20/flou/releases). Alternatively, if you have Cargo installed, you can run:
+
+    $ cargo install flou_cli
+
+Which will install the `flou` binary for you to use.
+
 ## Reasons to use Flou?
 
 - If you need to generate a flowchart automatically, you can write a program that generates Flou DSL and then use the CLI tool to compile the DSL into an image.
