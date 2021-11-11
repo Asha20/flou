@@ -1,12 +1,34 @@
 # Flou
 
-Flou is a [domain-specific language](https://en.wikipedia.org/wiki/Domain-specific_language) for describing flowcharts. It is also a CLI of the same name that renders the previously mentioned flowchart description into an SVG file.
+Flou is a [domain-specific language (DSL)](https://en.wikipedia.org/wiki/Domain-specific_language) for describing flowcharts. It is also a CLI of the same name that renders the previously mentioned flowchart description into an SVG file.
 
-Flou's goal is to offer a textual representation of flowcharts.
+Flou's goal is to offer a textual representation of flowcharts. Here's one example of the kind of flowcharts Flou can create:
+
+![Example](docs/src/syntax/define_block/example1.svg)
+
+Here's the corresponding Flou definition:
+
+```js
+grid {
+    block("Think about going outside", connect: s:n@s);
+    condition("Is it raining?"),                           block#stay("Stay inside");
+    condition("Is it cold?");
+    condition("Is it night?");
+    block("Go outside");
+}
+
+define {
+    block(class: "pink");
+    condition(shape: diamond, class: "yellow", connect: {
+        s:n@s("No");
+        e:w#stay("Yes");
+    });
+}
+```
 
 ## Documentation
 
-Flou's documentation can be found [here](https://asha20.github.io/flou).
+Flou's documentation and user guide can be found [here](https://asha20.github.io/flou).
 
 ## Reasons to use Flou?
 
